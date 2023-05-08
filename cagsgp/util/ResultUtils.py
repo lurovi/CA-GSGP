@@ -81,11 +81,14 @@ class ResultUtils:
                      num_offsprings: int,
                      max_depth: int,
                      pressure: int,
+                     pop_shape: tuple[int, ...],
                      crossover_probability: float,
                      mutation_probability: float,
+                     m: float,
                      execution_time_in_minutes: float,
                      neighbors_topology: str,
-                     dataset: str
+                     dataset: str,
+                     duplicates_elimination: str
                      ) -> dict[str, Any]:
         n_objectives: int = len(objective_names)
 
@@ -101,12 +104,15 @@ class ResultUtils:
         pareto_front_dict["parameters"]["Pressure"] = pressure
         pareto_front_dict["parameters"]["CrossoverProbability"] = crossover_probability
         pareto_front_dict["parameters"]["MutationProbability"] = mutation_probability
+        pareto_front_dict["parameters"]["m"] = m
         pareto_front_dict["parameters"]["ExecutionTimeInMinutes"] = execution_time_in_minutes
         pareto_front_dict["parameters"]["NeighborsTopology"] = neighbors_topology
         pareto_front_dict["parameters"]["Dataset"] = dataset
+        pareto_front_dict["parameters"]["DuplicatesElimination"] = duplicates_elimination
         pareto_front_dict["parameters"]["Seed"] = seed
         pareto_front_dict["parameters"]["NumObjectives"] = n_objectives
         pareto_front_dict["parameters"]["ObjectiveNames"] = objective_names
+        pareto_front_dict["parameters"]["PopShape"] = [n for n in pop_shape]
 
         for individual in opt:
             tree: Node = individual.X[0]
