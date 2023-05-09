@@ -119,7 +119,7 @@ class ResultUtils:
             fitness: list[float] = [individual.F[i] for i in range(n_objectives)]
             
             current_point: dict[str, Any] = {}
-            current_point["ParsableTree"] = get_subtree_as_full_list(tree)
+            current_point["ParsableTree"] = str(get_subtree_as_full_list(tree))
             current_point["LatexTree"] = ResultUtils.safe_latex_format(tree)
             current_point["Fitness"] = {objective_names[i]: fitness[i] for i in range(n_objectives)}
 
@@ -133,7 +133,7 @@ class ResultUtils:
                 fitness: list[float] = [individual.F[i] for i in range(n_objectives)]
                 
                 current_point: dict[str, Any] = {}
-                current_point["ParsableTree"] = get_subtree_as_full_list(tree)
+                current_point["ParsableTree"] = str(get_subtree_as_full_list(tree))
                 current_point["LatexTree"] = ResultUtils.safe_latex_format(tree)
                 current_point["Fitness"] = {objective_names[i]: fitness[i] for i in range(n_objectives)}
 

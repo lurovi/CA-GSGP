@@ -7,7 +7,7 @@ class TreeEvaluator(ABC):
         super().__init__()
 
     def class_name(self) -> str:
-        self.__class__.__name__
+        return self.__class__.__name__
 
     @abstractmethod
     def evaluate(self, tree: Node) -> float:

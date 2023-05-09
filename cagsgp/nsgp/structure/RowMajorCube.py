@@ -14,16 +14,22 @@ class RowMajorCube(NeighborsTopology):
                  n_channels: int,
                  n_rows: int,
                  n_cols: int,
-                 clone: bool = False
+                 clone: bool = False,
+                 fill_with_none: bool = False
                  ) -> None:
         super().__init__()
         self.__n_channels: int = n_channels
         self.__n_rows: int = n_rows
         self.__n_cols: int = n_cols
-        if len(collection) != self.__n_channels * self.__n_rows * self.__n_cols:
-            raise ValueError(f'The length of the collection (found {len(self.__collection)}) must match the product between number of channels ({self.__n_channels}), number of rows ({self.__n_rows}), and number of columns ({self.__n_cols}).')
+        if not fill_with_none and len(collection) != self.__n_channels * self.__n_rows * self.__n_cols:
+            raise ValueError(f'The length of the collection (found {len(collection)}) must match the product between number of channels ({self.__n_channels}), number of rows ({self.__n_rows}), and number of columns ({self.__n_cols}).')
         self.__collection: MutableSequence[T] = deepcopy(collection) if clone else collection
         self.__size_of_a_single_channel: int = self.n_rows() * self.n_cols()
+
+        curr_length: int = len(self.__collection)
+        target_length: int = self.__n_channels * self.__n_rows * self.__n_cols
+        for _ in range(target_length - curr_length):
+            self.__collection.append(None)
 
     def __hash__(self) -> int:
         molt: int = 31

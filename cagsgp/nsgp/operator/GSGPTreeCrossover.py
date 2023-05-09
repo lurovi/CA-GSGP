@@ -22,14 +22,13 @@ class GSGPTreeCrossover(Crossover):
 
         # The output with the shape (n_offsprings, n_matings, n_var)
         y = np.full((self.n_offsprings, n_matings, problem.n_var), None, dtype=object)
-
+        
         # for each mating provided
         for k in range(n_matings):
             # get the first and the second parent
             p1, p2 = x[0, k, 0], x[1, k, 0]
-
             # prepare the offsprings
             aa = self.__structure.geometric_semantic_single_tree_crossover(p1, p2, cache=self.__cache, store_in_cache=self.__store_in_cache)
             y[0, k, 0] = aa
-
+        
         return y

@@ -10,7 +10,7 @@ class NeighborsTopology(ABC):
         super().__init__()
     
     def class_name(self) -> str:
-        self.__class__.__name__
+        return self.__class__.__name__
 
     @abstractmethod
     def neighborhood(self, indices: list[int], include_current_point: bool = True, clone: bool = False) -> MutableSequence[T]:

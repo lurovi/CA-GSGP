@@ -29,7 +29,12 @@ class MSE(TreeEvaluator):
         intercept = np.core.umath.clip(intercept, -1e+10, 1e+10)
         res = intercept + np.core.umath.clip(slope * res, -1e+10, 1e+10)
         res = np.core.umath.clip(res, -1e+10, 1e+10)
-        mse: float = np.square(np.core.umath.clip(res - self.__y, -1e+20, 1e+20)).sum() / float(len(self.__y))
-        if mse > 1e+20:
-            mse = 1e+20
-        return mse
+        diff: np.ndarray = np.core.umath.clip(res - self.__y, -1e+20, 1e+20)
+        diff = np.core.umath.clip(np.square(diff), -1e+20, 1e+20)
+        s: float = diff.sum()
+        if s > 1e+20:
+            s = 1e+20
+        s = s / float(len(self.__y))
+        if s > 1e+20:
+            s = 1e+20
+        return s

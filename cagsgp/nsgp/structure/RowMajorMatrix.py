@@ -13,14 +13,20 @@ class RowMajorMatrix(NeighborsTopology):
                  collection: MutableSequence[T],
                  n_rows: int,
                  n_cols: int,
-                 clone: bool = False
+                 clone: bool = False,
+                 fill_with_none: bool = False
                  ) -> None:
         super().__init__()
         self.__n_rows: int = n_rows
         self.__n_cols: int = n_cols
-        if len(collection) != self.__n_rows * self.__n_cols:
-            raise ValueError(f'The length of the collection (found {len(self.__collection)}) must match the product between number of rows ({self.__n_rows}) and number of columns ({self.__n_cols}).')
+        if not fill_with_none and len(collection) != self.__n_rows * self.__n_cols:
+            raise ValueError(f'The length of the collection (found {len(collection)}) must match the product between number of rows ({self.__n_rows}) and number of columns ({self.__n_cols}).')
         self.__collection: MutableSequence[T] = deepcopy(collection) if clone else collection
+        
+        curr_length: int = len(self.__collection)
+        target_length: int = self.__n_rows * self.__n_cols
+        for _ in range(target_length - curr_length):
+            self.__collection.append(None)
 
     def __hash__(self) -> int:
         molt: int = 31

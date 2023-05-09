@@ -31,9 +31,10 @@ class MultiObjectiveMinimizationProblem(Problem):
         self.__parallelizer: Parallelizer = parallelizer if parallelizer is not None else FakeParallelizer()
 
         if revert_sign is None:
-            self.__revert_sign: list[bool] = [False] * self.__n_objective
+            self.__revert_sign: list[bool] = [False] * self.__n_objectives
         else:
             self.__revert_sign: list[bool] = revert_sign
+
         self.__stats_collector: StatsCollector = StatsCollector(objective_names=[e.class_name() for e in evaluators], revert_sign=self.__revert_sign)
 
     def stats_collector(self) -> StatsCollector:
