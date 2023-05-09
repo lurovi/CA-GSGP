@@ -74,6 +74,8 @@ class ResultUtils:
     @staticmethod
     def parse_result(opt: Population,
                      history: list[Algorithm],
+                     stats: dict[str, list[Any]],
+                     biodiversity: dict[str, list[float]],
                      objective_names: list[str],
                      seed: int,
                      pop_size: int,
@@ -95,7 +97,9 @@ class ResultUtils:
         pareto_front_dict: dict[str, Any] = {"parameters": {},
                                              "optimal": [],
                                              "history": [],
-                                             "n_evals": []}
+                                             "n_evals": [],
+                                             "statistics": stats,
+                                             "biodiversity": biodiversity}
         
         pareto_front_dict["parameters"]["PopSize"] = pop_size
         pareto_front_dict["parameters"]["NumGen"] = num_gen
@@ -145,8 +149,7 @@ class ResultUtils:
         return pareto_front_dict
 
     @staticmethod
-    def write_result_to_json(path: str, run_id: str, pareto_front_dict: dict[str, Any], stats_dict: dict[str, list[Any]]) -> None:
+    def write_result_to_json(path: str, run_id: str, pareto_front_dict: dict[str, Any]) -> None:
         d: dict[str, Any] = {k: pareto_front_dict[k] for k in pareto_front_dict}
-        d["statistics"] = stats_dict
         with open(path + "res-" + run_id + ".json", "w") as outfile:
             json.dump(d, outfile)

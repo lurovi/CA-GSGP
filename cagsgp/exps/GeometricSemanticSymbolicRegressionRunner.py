@@ -9,6 +9,7 @@ from pymoo.core.duplicate import ElementwiseDuplicateElimination
 from numpy.random import Generator
 from cagsgp.benchmark.DatasetGenerator import DatasetGenerator
 from cagsgp.nsgp.evaluator.MSE import MSE
+from cagsgp.nsgp.evaluator.TreeEvaluator import TreeEvaluator
 from cagsgp.nsgp.operator.DuplicateEliminationGenotype import DuplicateEliminationGenotype
 from cagsgp.nsgp.operator.DuplicateEliminationSemantic import DuplicateEliminationSemantic
 from cagsgp.nsgp.operator.GSGPTreeSetting import GSGPTreeSetting
@@ -50,9 +51,9 @@ class GeometricSemanticSymbolicRegression:
         mutation_probability: float = 0.5,
         m: float = 0.5,
         store_in_cache: bool = True,
-        duplicates_elimination: str = 'semantic',
+        duplicates_elimination: str = 'nothing',
         neighbors_topology: str = 'matrix'
-    ) -> tuple[dict[str, Any], dict[str, list[Any]], str]:
+    ) -> tuple[dict[str, Any], str]:
         
         if dataset_path is not None:        
             dataset: dict[str, tuple[np.ndarray, np.ndarray]] = PicklePersist.decompress_pickle(dataset_path)
@@ -73,10 +74,13 @@ class GeometricSemanticSymbolicRegression:
         else:
             parallelizer: Parallelizer = FakeParallelizer()
 
+        evaluators: list[TreeEvaluator] = [MSE(X_train, y_train)]
+
         generator: Generator = np.random.default_rng(seed)
         random.seed(seed)
         np.random.seed(seed)
-        problem: MultiObjectiveMinimizationProblem = MultiObjectiveMinimizationProblem(evaluators=[MSE(X_train, y_train)], parallelizer=parallelizer)
+        semantic_dupl_elim: DuplicateEliminationSemantic = DuplicateEliminationSemantic(X_train, cache=cache, store_in_cache=store_in_cache)
+        problem: MultiObjectiveMinimizationProblem = MultiObjectiveMinimizationProblem(evaluators=evaluators, parallelizer=parallelizer, semantic_dupl_elim=semantic_dupl_elim)
 
         if low_erc > high_erc:
             raise AttributeError(f"low erc is higher than high erc.")
@@ -91,9 +95,11 @@ class GeometricSemanticSymbolicRegression:
                                                  max_depth=max_depth)
         
         if duplicates_elimination == 'semantic':
-            dupl_el: ElementwiseDuplicateElimination = DuplicateEliminationSemantic(X_train, cache=cache, store_in_cache=store_in_cache)
+            dupl_el: ElementwiseDuplicateElimination = semantic_dupl_elim
         elif duplicates_elimination == 'structural':
             dupl_el: ElementwiseDuplicateElimination = DuplicateEliminationGenotype()
+        elif duplicates_elimination == 'nothing':
+            dupl_el: ElementwiseDuplicateElimination = None
         else:
             raise ValueError(f'{duplicates_elimination} is an invalid duplicates elimination method.')
 
@@ -107,10 +113,10 @@ class GeometricSemanticSymbolicRegression:
         
         if neighbors_topology == 'matrix':
             pressure: int = 9
-            selector: Selection = RowMajorMatrixSelection(n_rows=pop_shape[0], n_cols=pop_shape[1])
+            selector: Selection = RowMajorMatrixSelection(n_rows=pop_shape[0], n_cols=pop_shape[1], structure=structure, evaluators=evaluators)
         elif neighbors_topology == 'cube':
             pressure: int = 27
-            selector: Selection = RowMajorCubeSelection(n_channels=pop_shape[0], n_rows=pop_shape[1], n_cols=pop_shape[2])
+            selector: Selection = RowMajorCubeSelection(n_channels=pop_shape[0], n_rows=pop_shape[1], n_cols=pop_shape[2], structure=structure, evaluators=evaluators)
         else:
             raise ValueError(f'{neighbors_topology} is not a valid neighbors topology.')
 
@@ -135,15 +141,19 @@ class GeometricSemanticSymbolicRegression:
 
         problem: MultiObjectiveMinimizationProblem = res.problem
 
-        stats: StatsCollector = problem.stats_collector()
-        all_stats: dict[str, list[Any]] = stats.build_dict()
+        stats_collector: StatsCollector = problem.stats_collector()
+        stats: dict[str, list[Any]] = stats_collector.build_dict()
+
+        biodiversity: dict[str, list[float]] = problem.biodiversity()
         
         opt: Population = res.opt
         history: list[Algorithm] = res.history
 
         pareto_front_df: dict[str, Any] = ResultUtils.parse_result(opt=opt,
                                                                    history=history,
-                                                                   objective_names=['MSE'],
+                                                                   stats=stats,
+                                                                   biodiversity=biodiversity,
+                                                                   objective_names=[e.class_name() for e in evaluators],
                                                                    seed=seed,
                                                                    pop_size=pop_size,
                                                                    num_gen=num_gen,
@@ -162,4 +172,4 @@ class GeometricSemanticSymbolicRegression:
         run_id: str = f"symbolictreesMSECAGSGPNSGA2-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-neighbors_topology_{neighbors_topology}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-SEED{seed}"
         if verbose:
             print(f"\nSYMBOLIC TREES MSE CA-GSGP NSGA2: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Neighbors Topology {neighbors_topology}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
-        return pareto_front_df, all_stats, run_id
+        return pareto_front_df, run_id

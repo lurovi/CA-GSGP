@@ -5,6 +5,7 @@ from genepro.node import Node
 from collections.abc import Callable
 from functools import partial
 
+from cagsgp.nsgp.operator.DuplicateEliminationSemantic import DuplicateEliminationSemantic
 from cagsgp.nsgp.evaluator.TreeEvaluator import TreeEvaluator
 from cagsgp.util.parallel.Parallelizer import Parallelizer
 from cagsgp.util.parallel.FakeParallelizer import FakeParallelizer
@@ -14,6 +15,7 @@ from cagsgp.nsgp.stat.StatsCollector import StatsCollector
 class MultiObjectiveMinimizationProblem(Problem):
     def __init__(self,
                  evaluators: list[TreeEvaluator],
+                 semantic_dupl_elim: DuplicateEliminationSemantic,
                  revert_sign: list[bool] = None,
                  parallelizer: Parallelizer = None
                  ) -> None:
@@ -29,6 +31,7 @@ class MultiObjectiveMinimizationProblem(Problem):
         self.__is_multi_objective: bool = self.__n_objectives > 1
         self.__n_gen: int = -1
         self.__parallelizer: Parallelizer = parallelizer if parallelizer is not None else FakeParallelizer()
+        self.__semantic_dupl_elim: DuplicateEliminationSemantic = semantic_dupl_elim
 
         if revert_sign is None:
             self.__revert_sign: list[bool] = [False] * self.__n_objectives
@@ -37,8 +40,13 @@ class MultiObjectiveMinimizationProblem(Problem):
 
         self.__stats_collector: StatsCollector = StatsCollector(objective_names=[e.class_name() for e in evaluators], revert_sign=self.__revert_sign)
 
+        self.__biodiversity: dict[str, list[float]] = {"structural": [], "semantic": []}
+
     def stats_collector(self) -> StatsCollector:
         return self.__stats_collector
+    
+    def biodiversity(self) -> dict[str, list[float]]:
+        return self.__biodiversity
 
     def _evaluate(self, x, out, *args, **kwargs):
         self._eval(x, out, *args, **kwargs)
@@ -47,11 +55,41 @@ class MultiObjectiveMinimizationProblem(Problem):
         self.__n_gen += 1
 
         pp: Callable = partial(single_evaluation, evaluators=self.__evaluators)
-        result: list[list[float]] = self.__parallelizer.parallelize(pp, [{'individual': x[i, 0]} for i in range(len(x))])
+        all_inds: list[dict[str, Node]] = [{'individual': x[i, 0]} for i in range(len(x))]
+        
+        result: list[list[float]] = self.__parallelizer.parallelize(pp, all_inds)
         result_np: np.ndarray = np.array(result, dtype=np.float32)
         out["F"] = result_np.reshape(1, -1)[0] if not self.__is_multi_objective else result_np
 
         self.__stats_collector.update_fitness_stat_dict(n_gen=self.__n_gen, data=result_np)
+
+        current_biodiversity: dict[str, float] = self.__count_duplicates(all_inds=all_inds)
+        self.__biodiversity['structural'].append(current_biodiversity['structural'])
+        self.__biodiversity['semantic'].append(current_biodiversity['semantic'])
+
+    def __count_duplicates(self, all_inds: list[dict[str, Node]]) -> dict[str, float]:
+        count_structural: float = 0
+        count_semantic: float = 0
+        length: int = len(all_inds)
+
+        for i in range(length):
+            is_duplicate_structural: bool = False
+            is_duplicate_semantic: bool = False
+            j: int = i + 1
+            while (not is_duplicate_structural or not is_duplicate_semantic) and j < length:
+                node_i: Node = all_inds[i]['individual']
+                node_j: Node = all_inds[j]['individual']
+                if node_i == node_j:
+                    is_duplicate_structural = True
+                if self.__semantic_dupl_elim.node_semantic_equals(node_i, node_j):
+                    is_duplicate_semantic = True
+                j += 1
+            if is_duplicate_structural:
+                count_structural += 1
+            if is_duplicate_semantic:
+                count_semantic += 1
+
+        return {"structural": 1.0 - count_structural/float(len(all_inds) - 1), "semantic": 1.0 - count_semantic/float(len(all_inds) - 1)}
 
 
 def single_evaluation(individual: Node, evaluators: list[TreeEvaluator]) -> list[float]:

@@ -10,7 +10,7 @@ from genepro.node_impl import Plus, Minus, Times, Div, Square, Max
 
 if __name__ == '__main__':
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
-    folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
+    folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_2' + '/'
 
     pop_size: int = 100
     num_gen: int = 4
@@ -18,9 +18,9 @@ if __name__ == '__main__':
     mutation_probability: float = 0.6
 
     dataset_name: str = 'vladislavleva4'
-    neighbors_topology: str = 'cube'
-    duplicates_elimination: str = 'structural'
-    pop_shape: tuple[int, ...] = (4, 5, 5)
+    neighbors_topology: str = 'matrix'
+    duplicates_elimination: str = 'semantic'
+    pop_shape: tuple[int, ...] = (10, 10)
 
     operators: list[Node] = [Plus(), Minus(), Times(), Div(), Square(), Max()]
     
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     for seed in seed_list:
         for max_depth in [3]:
 
-            t: tuple[dict[str, Any], dict[str, list[Any]], str] = GeometricSemanticSymbolicRegression.run_symbolic_regression_with_cellular_automata_gsgp(
+            t: tuple[dict[str, Any], str] = GeometricSemanticSymbolicRegression.run_symbolic_regression_with_cellular_automata_gsgp(
                 pop_size=pop_size,
                 pop_shape=pop_shape,
                 num_gen=num_gen,
@@ -63,7 +63,7 @@ if __name__ == '__main__':
                 neighbors_topology=neighbors_topology
             )
 
-            ResultUtils.write_result_to_json(path=folder_name, run_id=t[2], pareto_front_dict=t[0], stats_dict=t[1])
+            ResultUtils.write_result_to_json(path=folder_name, run_id=t[1], pareto_front_dict=t[0])
             print("NEXT")
 
     end_time: float = time.time()
