@@ -89,7 +89,7 @@ class ResultUtils:
                      m: float,
                      execution_time_in_minutes: float,
                      neighbors_topology: str,
-                     dataset: str,
+                     dataset_name: str,
                      duplicates_elimination: str
                      ) -> dict[str, Any]:
         n_objectives: int = len(objective_names)
@@ -111,7 +111,7 @@ class ResultUtils:
         pareto_front_dict["parameters"]["m"] = m
         pareto_front_dict["parameters"]["ExecutionTimeInMinutes"] = execution_time_in_minutes
         pareto_front_dict["parameters"]["NeighborsTopology"] = neighbors_topology
-        pareto_front_dict["parameters"]["Dataset"] = dataset
+        pareto_front_dict["parameters"]["Dataset"] = dataset_name
         pareto_front_dict["parameters"]["DuplicatesElimination"] = duplicates_elimination
         pareto_front_dict["parameters"]["Seed"] = seed
         pareto_front_dict["parameters"]["NumObjectives"] = n_objectives
@@ -145,7 +145,55 @@ class ResultUtils:
 
             pareto_front_dict["history"].append(current_gen)
             pareto_front_dict["n_evals"].append(alg.evaluator.n_eval)
+    
+        return pareto_front_dict
 
+    @staticmethod
+    def parse_result_soo(
+        result: dict[str, Any],
+        objective_names: list[str],
+        seed: int,
+        pop_size: int,
+        num_gen: int,
+        num_offsprings: int,
+        max_depth: int,
+        pressure: int,
+        pop_shape: tuple[int, ...],
+        crossover_probability: float,
+        mutation_probability: float,
+        m: float,
+        execution_time_in_minutes: float,
+        neighbors_topology: str,
+        dataset_name: str,
+        duplicates_elimination: str
+    ) -> dict[str, Any]:
+        n_objectives: int = len(objective_names)
+
+        pareto_front_dict: dict[str, Any] = {"parameters": {},
+                                             "optimal": result['best'],
+                                             "history": result['history'],
+                                             "n_evals": [],
+                                             "biodiversity": {},
+                                             "statistics": result['statistics']
+                                             }
+        
+        pareto_front_dict["parameters"]["PopSize"] = pop_size
+        pareto_front_dict["parameters"]["NumGen"] = num_gen
+        pareto_front_dict["parameters"]["NumOffsprings"] = num_offsprings
+        pareto_front_dict["parameters"]["MaxDepth"] = max_depth
+        pareto_front_dict["parameters"]["Pressure"] = pressure
+        pareto_front_dict["parameters"]["CrossoverProbability"] = crossover_probability
+        pareto_front_dict["parameters"]["MutationProbability"] = mutation_probability
+        pareto_front_dict["parameters"]["m"] = m
+        pareto_front_dict["parameters"]["ExecutionTimeInMinutes"] = execution_time_in_minutes
+        pareto_front_dict["parameters"]["NeighborsTopology"] = neighbors_topology
+        pareto_front_dict["parameters"]["Dataset"] = dataset_name
+        pareto_front_dict["parameters"]["DuplicatesElimination"] = duplicates_elimination
+        pareto_front_dict["parameters"]["Seed"] = seed
+        pareto_front_dict["parameters"]["NumObjectives"] = n_objectives
+        pareto_front_dict["parameters"]["ObjectiveNames"] = objective_names
+        pareto_front_dict["parameters"]["PopShape"] = [n for n in pop_shape]
+    
         return pareto_front_dict
 
     @staticmethod

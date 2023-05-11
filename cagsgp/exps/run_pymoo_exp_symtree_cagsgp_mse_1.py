@@ -2,10 +2,10 @@ import argparse
 import os
 import time
 from typing import Any
-from cagsgp.exps.GeometricSemanticSymbolicRegressionRunner import GeometricSemanticSymbolicRegressionRunner
+from cagsgp.exps.GeometricSemanticSymbolicRegressionRunnerPymoo import GeometricSemanticSymbolicRegressionRunnerPymoo
 from cagsgp.util.ResultUtils import ResultUtils
 from genepro.node import Node
-from genepro.node_impl import Plus, Minus, Times, Div
+from genepro.node_impl import Plus, Minus, Times, Div, Square, Max
 
 
 if __name__ == '__main__':
@@ -15,7 +15,6 @@ if __name__ == '__main__':
     pop_size: int = 100
     num_gen: int = 5
     m: float = 2.0
-    crossover_probability: float = 0.9
     mutation_probability: float = 0.6
 
     dataset_name: str = 'vladislavleva4'
@@ -46,7 +45,7 @@ if __name__ == '__main__':
     for seed in seed_list:
         for max_depth in [6]:
 
-            t: tuple[dict[str, Any], str] = GeometricSemanticSymbolicRegressionRunner.run_symbolic_regression_with_cellular_automata_gsgp(
+            t: tuple[dict[str, Any], str] = GeometricSemanticSymbolicRegressionRunnerPymoo.run_symbolic_regression_with_cellular_automata_gsgp(
                 pop_size=pop_size,
                 pop_shape=pop_shape,
                 num_gen=num_gen,
@@ -60,7 +59,6 @@ if __name__ == '__main__':
                 seed=seed,
                 multiprocess=False,
                 verbose=True,
-                crossover_probability=crossover_probability,
                 mutation_probability=mutation_probability,
                 m=m,
                 store_in_cache=True,

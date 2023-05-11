@@ -179,7 +179,7 @@ class GeometricSemanticSymbolicRegressionRunnerPymoo:
                                                                    m=m,
                                                                    execution_time_in_minutes=execution_time_in_minutes,
                                                                    neighbors_topology=neighbors_topology,
-                                                                   dataset=dataset_name,
+                                                                   dataset_name=dataset_name,
                                                                    duplicates_elimination=duplicates_elimination)
         
         run_id: str = f"symbolictreesRMSECAGSGPNSGA2-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-neighbors_topology_{neighbors_topology}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(1.0, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-SEED{seed}"
