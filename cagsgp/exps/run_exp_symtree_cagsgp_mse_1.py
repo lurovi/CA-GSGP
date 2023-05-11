@@ -13,12 +13,12 @@ if __name__ == '__main__':
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
 
     pop_size: int = 100
-    num_gen: int = 5
+    num_gen: int = 20
     m: float = 2.0
     crossover_probability: float = 0.9
     mutation_probability: float = 0.6
 
-    dataset_name: str = 'vladislavleva4'
+    dataset_name: str = 'korns12'
     neighbors_topology: str = 'matrix'
     duplicates_elimination: str = 'nothing'
     pop_shape: tuple[int, ...] = (10, 10)

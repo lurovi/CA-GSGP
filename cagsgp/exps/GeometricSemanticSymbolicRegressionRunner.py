@@ -5,17 +5,13 @@ import itertools
 import math
 import time
 from typing import Any
+from weakref import WeakKeyDictionary
 
 from numpy.random import Generator
 from prettytable import PrettyTable
 from cagsgp.benchmark.DatasetGenerator import DatasetGenerator
 from cagsgp.nsgp.evaluator.RMSE import RMSE
 from cagsgp.nsgp.evaluator.TreeEvaluator import TreeEvaluator
-from cagsgp.nsgp.operator.DuplicateEliminationGenotype import DuplicateEliminationGenotype
-from cagsgp.nsgp.operator.DuplicateEliminationSemantic import DuplicateEliminationSemantic
-from cagsgp.nsgp.operator.GSGPTreeSetting import GSGPTreeSetting
-from cagsgp.nsgp.operator.NeighborsTopologySelection import NeighborsTopologySelection
-from cagsgp.nsgp.problem.MultiObjectiveMinimizationProblem import MultiObjectiveMinimizationProblem
 from cagsgp.nsgp.stat.StatsCollectorSingle import StatsCollectorSingle
 from cagsgp.nsgp.structure.NeighborsTopology import NeighborsTopology
 from cagsgp.nsgp.structure.TreeStructure import TreeStructure
@@ -71,12 +67,13 @@ class GeometricSemanticSymbolicRegressionRunner:
         
         X_train: np.ndarray = dataset['training'][0]
         y_train: np.ndarray = dataset['training'][1]
-        X_dev: np.ndarray = dataset['validation'][0]
-        y_dev: np.ndarray = dataset['validation'][1]
-        X_test: np.ndarray = dataset['test'][0]
-        y_test: np.ndarray = dataset['test'][1]
+        #X_dev: np.ndarray = dataset['validation'][0]
+        #y_dev: np.ndarray = dataset['validation'][1]
+        #X_test: np.ndarray = dataset['test'][0]
+        #y_test: np.ndarray = dataset['test'][1]
+        dataset = None
 
-        cache: dict[Node, np.ndarray] = {}
+        cache: dict[Node, np.ndarray] = WeakKeyDictionary()
 
         if multiprocess:
             parallelizer: Parallelizer = MultiProcessingParallelizer(-1)
@@ -184,7 +181,7 @@ class GeometricSemanticSymbolicRegressionRunner:
         np.random.seed(seed)
 
         rmse: TreeEvaluator = evaluators[0]
-        fitness: dict[Node, float] = {}
+        fitness: dict[Node, float] = WeakKeyDictionary()
         topology_total_size: int = math.prod(pop_shape)
         all_possible_coordinates: list[tuple[int, ...]] = [elem for elem in itertools.product(*[list(range(s)) for s in pop_shape])]
         result: dict[str, Any] = {'best': {}, 
@@ -235,6 +232,12 @@ class GeometricSemanticSymbolicRegressionRunner:
                 second: tuple[int, Node, float] = competitors[1]
                 parents.append((first[1], second[1]))
 
+            evaluated_individuals = None
+            neighbors_topology = None
+            competitors = None
+            first = None
+            second = None
+
             # ===========================
             # CROSSOVER AND MUTATION
             # ===========================
@@ -256,6 +259,8 @@ class GeometricSemanticSymbolicRegressionRunner:
             # ===========================
 
             pop = offsprings
+            parents = None
+            offsprings = None
 
         # ===========================
         # FITNESS EVALUATION AND UPDATE
