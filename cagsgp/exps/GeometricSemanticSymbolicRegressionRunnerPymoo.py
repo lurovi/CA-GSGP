@@ -86,7 +86,7 @@ class GeometricSemanticSymbolicRegressionRunnerPymoo:
         random.seed(seed)
         np.random.seed(seed)
         semantic_dupl_elim: DuplicateEliminationSemantic = DuplicateEliminationSemantic(X_train, cache=cache, store_in_cache=store_in_cache, fix_properties=fix_properties)
-        problem: MultiObjectiveMinimizationProblem = MultiObjectiveMinimizationProblem(evaluators=evaluators, parallelizer=parallelizer, semantic_dupl_elim=semantic_dupl_elim, compite)
+        problem: MultiObjectiveMinimizationProblem = MultiObjectiveMinimizationProblem(evaluators=evaluators, parallelizer=parallelizer, semantic_dupl_elim=semantic_dupl_elim, compute_biodiversity=False)
 
         if low_erc > high_erc:
             raise AttributeError(f"low erc is higher than high erc.")
