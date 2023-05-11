@@ -13,7 +13,8 @@ class RowMajorMatrix(NeighborsTopology):
                  collection: MutableSequence[T],
                  n_rows: int,
                  n_cols: int,
-                 clone: bool = False
+                 clone: bool = False,
+                 radius: int = 1
                  ) -> None:
         super().__init__()
         self.__n_rows: int = n_rows
@@ -21,6 +22,7 @@ class RowMajorMatrix(NeighborsTopology):
         if len(collection) != self.__n_rows * self.__n_cols:
             raise ValueError(f'The length of the collection (found {len(collection)}) must match the product between number of rows ({self.__n_rows}) and number of columns ({self.__n_cols}).')
         self.__collection: MutableSequence[T] = deepcopy(collection) if clone else collection
+        self.__radius: int = radius
 
     def __hash__(self) -> int:
         molt: int = 31
@@ -59,6 +61,8 @@ class RowMajorMatrix(NeighborsTopology):
         return deepcopy(self.__collection) if clone else self.__collection
     
     def get(self, indices: tuple[int, ...], clone: bool = False) -> T:
+        if len(indices) != 2:
+            raise ValueError(f'The length of indices must be 2, found {len(indices)} instead.')
         i: int = indices[0]
         j: int = indices[1]
         self.__check_row_index(i)
@@ -67,6 +71,8 @@ class RowMajorMatrix(NeighborsTopology):
         return deepcopy(val) if clone else val
     
     def set(self, indices: tuple[int, ...], val: T, clone: bool = False) -> T:
+        if len(indices) != 2:
+            raise ValueError(f'The length of indices must be 2, found {len(indices)} instead.')
         i: int = indices[0]
         j: int = indices[1]
         self.__check_row_index(i)
@@ -91,8 +97,8 @@ class RowMajorMatrix(NeighborsTopology):
         self.__check_row_index(i)
         self.__check_col_index(j)
         result: MutableSequence[T] = []
-        for ii in range(i - 1, i + 2):
-            for jj in range(j - 1, j + 2):
+        for ii in range(i - self.__radius, i + self.__radius + 1):
+            for jj in range(j - self.__radius, j + self.__radius + 1):
                 if ii == i and jj == j:
                     if include_current_point:
                         result.append(self.get((ii,jj),clone=clone))

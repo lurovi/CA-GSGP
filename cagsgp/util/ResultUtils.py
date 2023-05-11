@@ -89,6 +89,7 @@ class ResultUtils:
                      m: float,
                      execution_time_in_minutes: float,
                      neighbors_topology: str,
+                     radius: int,
                      dataset_name: str,
                      duplicates_elimination: str
                      ) -> dict[str, Any]:
@@ -111,6 +112,7 @@ class ResultUtils:
         pareto_front_dict["parameters"]["m"] = m
         pareto_front_dict["parameters"]["ExecutionTimeInMinutes"] = execution_time_in_minutes
         pareto_front_dict["parameters"]["NeighborsTopology"] = neighbors_topology
+        pareto_front_dict["parameters"]["Radius"] = radius
         pareto_front_dict["parameters"]["Dataset"] = dataset_name
         pareto_front_dict["parameters"]["DuplicatesElimination"] = duplicates_elimination
         pareto_front_dict["parameters"]["Seed"] = seed
@@ -164,6 +166,7 @@ class ResultUtils:
         m: float,
         execution_time_in_minutes: float,
         neighbors_topology: str,
+        radius: int,
         dataset_name: str,
         duplicates_elimination: str
     ) -> dict[str, Any]:
@@ -187,6 +190,7 @@ class ResultUtils:
         pareto_front_dict["parameters"]["m"] = m
         pareto_front_dict["parameters"]["ExecutionTimeInMinutes"] = execution_time_in_minutes
         pareto_front_dict["parameters"]["NeighborsTopology"] = neighbors_topology
+        pareto_front_dict["parameters"]["Radius"] = radius
         pareto_front_dict["parameters"]["Dataset"] = dataset_name
         pareto_front_dict["parameters"]["DuplicatesElimination"] = duplicates_elimination
         pareto_front_dict["parameters"]["Seed"] = seed

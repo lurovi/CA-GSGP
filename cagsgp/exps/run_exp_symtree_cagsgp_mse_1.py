@@ -18,6 +18,7 @@ if __name__ == '__main__':
     pop_size: int = 100
     num_gen: int = 10
     m: float = 2.0
+    radius: int = 1
     crossover_probability: float = 0.9
     mutation_probability: float = 0.6
 
@@ -70,7 +71,8 @@ if __name__ == '__main__':
                 store_in_cache=True,
                 fix_properties=True,
                 duplicates_elimination=duplicates_elimination,
-                neighbors_topology=neighbors_topology
+                neighbors_topology=neighbors_topology,
+                radius=radius
             )
             #pr.disable()
             #pr.print_stats(sort='tottime')

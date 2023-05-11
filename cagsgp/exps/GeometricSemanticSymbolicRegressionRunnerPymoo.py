@@ -1,6 +1,7 @@
 from collections.abc import Callable
 import time
 from typing import Any
+from weakref import WeakKeyDictionary
 from pymoo.core.result import Result
 from pymoo.core.population import Population
 from pymoo.core.algorithm import Algorithm
@@ -58,7 +59,8 @@ class GeometricSemanticSymbolicRegressionRunnerPymoo:
         store_in_cache: bool = True,
         fix_properties: bool = True,
         duplicates_elimination: str = 'nothing',
-        neighbors_topology: str = 'matrix'
+        neighbors_topology: str = 'matrix',
+        radius: int = 1
     ) -> tuple[dict[str, Any], str]:
         
         if dataset_path is not None:        
@@ -68,12 +70,13 @@ class GeometricSemanticSymbolicRegressionRunnerPymoo:
         
         X_train: np.ndarray = dataset['training'][0]
         y_train: np.ndarray = dataset['training'][1]
-        X_dev: np.ndarray = dataset['validation'][0]
-        y_dev: np.ndarray = dataset['validation'][1]
-        X_test: np.ndarray = dataset['test'][0]
-        y_test: np.ndarray = dataset['test'][1]
+        #X_dev: np.ndarray = dataset['validation'][0]
+        #y_dev: np.ndarray = dataset['validation'][1]
+        #X_test: np.ndarray = dataset['test'][0]
+        #y_test: np.ndarray = dataset['test'][1]
+        dataset = None
 
-        cache: dict[Node, np.ndarray] = {}
+        cache: dict[Node, np.ndarray] = WeakKeyDictionary()
 
         if multiprocess:
             parallelizer: Parallelizer = MultiProcessingParallelizer(-1)
@@ -122,12 +125,11 @@ class GeometricSemanticSymbolicRegressionRunnerPymoo:
                                                    duplicates_elimination=dupl_el
                                                    )
         
+        pressure: int = (2 * radius + 1) ** len(pop_shape)
         if neighbors_topology == 'matrix':
-            pressure: int = 9
-            neighbors_topology_factory: NeighborsTopologyFactory = RowMajorMatrixFactory(n_rows=pop_shape[0], n_cols=pop_shape[1])
+            neighbors_topology_factory: NeighborsTopologyFactory = RowMajorMatrixFactory(n_rows=pop_shape[0], n_cols=pop_shape[1], radius=radius)
         elif neighbors_topology == 'cube':
-            pressure: int = 27
-            neighbors_topology_factory: NeighborsTopologyFactory = RowMajorCubeFactory(n_channels=pop_shape[0], n_rows=pop_shape[1], n_cols=pop_shape[2])
+            neighbors_topology_factory: NeighborsTopologyFactory = RowMajorCubeFactory(n_channels=pop_shape[0], n_rows=pop_shape[1], n_cols=pop_shape[2], radius=radius)
         else:
             raise ValueError(f'{neighbors_topology} is not a valid neighbors topology.')
 
@@ -179,10 +181,11 @@ class GeometricSemanticSymbolicRegressionRunnerPymoo:
                                                                    m=m,
                                                                    execution_time_in_minutes=execution_time_in_minutes,
                                                                    neighbors_topology=neighbors_topology,
+                                                                   radius=radius,
                                                                    dataset_name=dataset_name,
                                                                    duplicates_elimination=duplicates_elimination)
         
-        run_id: str = f"symbolictreesRMSECAGSGPNSGA2-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-neighbors_topology_{neighbors_topology}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(1.0, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-SEED{seed}"
+        run_id: str = f"symbolictreesRMSECAGSGPNSGA2-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-neighbors_topology_{neighbors_topology}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(1.0, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-radius_{str(radius)}-SEED{seed}"
         if verbose:
-            print(f"\nSYMBOLIC TREES RMSE CA-GSGP NSGA2: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Neighbors Topology {neighbors_topology}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}, Crossover Probability {str(round(1.0, 2))}, Mutation Probability {str(round(mutation_probability, 2))}, M {str(round(m, 2))}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
+            print(f"\nSYMBOLIC TREES RMSE CA-GSGP NSGA2: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Neighbors Topology {neighbors_topology}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}, Crossover Probability {str(round(1.0, 2))}, Mutation Probability {str(round(mutation_probability, 2))}, M {str(round(m, 2))}, Radius {str(radius)}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
         return pareto_front_df, run_id

@@ -15,6 +15,7 @@ if __name__ == '__main__':
     pop_size: int = 100
     num_gen: int = 5
     m: float = 2.0
+    radius: int = 1
     mutation_probability: float = 0.6
 
     dataset_name: str = 'vladislavleva4'
@@ -64,7 +65,8 @@ if __name__ == '__main__':
                 store_in_cache=True,
                 fix_properties=True,
                 duplicates_elimination=duplicates_elimination,
-                neighbors_topology=neighbors_topology
+                neighbors_topology=neighbors_topology,
+                radius=radius
             )
 
             ResultUtils.write_result_to_json(path=folder_name, run_id=t[1], pareto_front_dict=t[0])

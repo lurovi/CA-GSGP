@@ -14,7 +14,8 @@ class RowMajorCube(NeighborsTopology):
                  n_channels: int,
                  n_rows: int,
                  n_cols: int,
-                 clone: bool = False
+                 clone: bool = False,
+                 radius: int = 1
                  ) -> None:
         super().__init__()
         self.__n_channels: int = n_channels
@@ -24,6 +25,7 @@ class RowMajorCube(NeighborsTopology):
             raise ValueError(f'The length of the collection (found {len(collection)}) must match the product between number of channels ({self.__n_channels}), number of rows ({self.__n_rows}), and number of columns ({self.__n_cols}).')
         self.__collection: MutableSequence[T] = deepcopy(collection) if clone else collection
         self.__size_of_a_single_channel: int = self.n_rows() * self.n_cols()
+        self.__radius: int = radius
 
     def __hash__(self) -> int:
         molt: int = 31
@@ -68,6 +70,8 @@ class RowMajorCube(NeighborsTopology):
         return deepcopy(self.__collection) if clone else self.__collection
     
     def get(self, indices: tuple[int, ...], clone: bool = False) -> T:
+        if len(indices) != 3:
+            raise ValueError(f'The length of indices must be 3, found {len(indices)} instead.')
         l: int = indices[0]
         i: int = indices[1]
         j: int = indices[2]
@@ -78,6 +82,8 @@ class RowMajorCube(NeighborsTopology):
         return deepcopy(val) if clone else val
     
     def set(self, indices: tuple[int, ...], val: T, clone: bool = False) -> T:
+        if len(indices) != 3:
+            raise ValueError(f'The length of indices must be 3, found {len(indices)} instead.')
         l: int = indices[0]
         i: int = indices[1]
         j: int = indices[2]
@@ -106,9 +112,9 @@ class RowMajorCube(NeighborsTopology):
         self.__check_row_index(i)
         self.__check_col_index(j)
         result: MutableSequence[T] = []
-        for ll in range(l - 1, l + 2):
-            for ii in range(i - 1, i + 2):
-                for jj in range(j - 1, j + 2):
+        for ll in range(l - self.__radius, l + self.__radius + 1):
+            for ii in range(i - self.__radius, i + self.__radius + 1):
+                for jj in range(j - self.__radius, j + self.__radius + 1):
                     if ll == l and ii == i and jj == j:
                         if include_current_point:
                             result.append(self.get((ll,ii,jj),clone=clone))

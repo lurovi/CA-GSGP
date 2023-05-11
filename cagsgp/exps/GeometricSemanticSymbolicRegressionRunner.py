@@ -57,7 +57,8 @@ class GeometricSemanticSymbolicRegressionRunner:
         store_in_cache: bool = True,
         fix_properties: bool = True,
         duplicates_elimination: str = 'nothing',
-        neighbors_topology: str = 'matrix'
+        neighbors_topology: str = 'matrix',
+        radius: int = 1
     ) -> tuple[dict[str, Any], str]:
         
         if dataset_path is not None:        
@@ -102,12 +103,11 @@ class GeometricSemanticSymbolicRegressionRunner:
                                                  n_features=X_train.shape[1],
                                                  max_depth=max_depth)
 
+        pressure: int = (2 * radius + 1) ** len(pop_shape)
         if neighbors_topology == 'matrix':
-            pressure: int = 9
-            neighbors_topology_factory: NeighborsTopologyFactory = RowMajorMatrixFactory(n_rows=pop_shape[0], n_cols=pop_shape[1])
+            neighbors_topology_factory: NeighborsTopologyFactory = RowMajorMatrixFactory(n_rows=pop_shape[0], n_cols=pop_shape[1], radius=radius)
         elif neighbors_topology == 'cube':
-            pressure: int = 27
-            neighbors_topology_factory: NeighborsTopologyFactory = RowMajorCubeFactory(n_channels=pop_shape[0], n_rows=pop_shape[1], n_cols=pop_shape[2])
+            neighbors_topology_factory: NeighborsTopologyFactory = RowMajorCubeFactory(n_channels=pop_shape[0], n_rows=pop_shape[1], n_cols=pop_shape[2], radius=radius)
         else:
             raise ValueError(f'{neighbors_topology} is not a valid neighbors topology.')
 
@@ -149,13 +149,14 @@ class GeometricSemanticSymbolicRegressionRunner:
             m=m,
             execution_time_in_minutes=execution_time_in_minutes,
             neighbors_topology=neighbors_topology,
+            radius=radius,
             dataset_name=dataset_name,
             duplicates_elimination=duplicates_elimination
         )
         
-        run_id: str = f"symbolictreesRMSECAGSGPSOO-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-neighbors_topology_{neighbors_topology}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(1.0, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-SEED{seed}"
+        run_id: str = f"symbolictreesRMSECAGSGPSOO-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-neighbors_topology_{neighbors_topology}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(1.0, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-radius_{str(radius)}-SEED{seed}"
         if verbose:
-            print(f"\nSYMBOLIC TREES RMSE CA-GSGP SOO: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Neighbors Topology {neighbors_topology}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}, Crossover Probability {str(round(1.0, 2))}, Mutation Probability {str(round(mutation_probability, 2))}, M {str(round(m, 2))}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
+            print(f"\nSYMBOLIC TREES RMSE CA-GSGP SOO: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Neighbors Topology {neighbors_topology}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}, Crossover Probability {str(round(1.0, 2))}, Mutation Probability {str(round(mutation_probability, 2))}, M {str(round(m, 2))}, Radius {str(radius)}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
         return pareto_front_df, run_id
     
     @staticmethod
@@ -181,11 +182,8 @@ class GeometricSemanticSymbolicRegressionRunner:
 
         rmse: TreeEvaluator = evaluators[0]
         fitness: dict[Node, float] = WeakKeyDictionary()
-        topology_total_size: int = math.prod(pop_shape)
         all_possible_coordinates: list[tuple[int, ...]] = [elem for elem in itertools.product(*[list(range(s)) for s in pop_shape])]
-        result: dict[str, Any] = {'best': {}, 
-                                  'history': []
-                                  }
+        result: dict[str, Any] = {'best': {}, 'history': []}
         stats_collector: StatsCollectorSingle = StatsCollectorSingle(objective_name=rmse.class_name(), revert_sign=False)
         
         neigh_top_indices: NeighborsTopology = neighbors_topology_factory.create(all_possible_coordinates, clone=False)
@@ -203,7 +201,7 @@ class GeometricSemanticSymbolicRegressionRunner:
         pop: list[Node] = [structure.generate_tree() for _ in range(pop_size)]
         
         # ===========================
-        # ITERATION
+        # ITERATIONS
         # ===========================
         
         for current_gen in range(num_gen):
@@ -251,11 +249,13 @@ class GeometricSemanticSymbolicRegressionRunner:
 
             offsprings: list[Node] = []
             for i, both_trees in enumerate(parents, 0):
+                # CROSSOVER
                 if random.random() < crossover_probability:
                     new_tree: Node = structure.geometric_semantic_single_tree_crossover(both_trees[0], both_trees[1], cache=cache, store_in_cache=store_in_cache, fix_properties=fix_properties)
                 else:
                     new_tree: Node = pop[i]
 
+                # MUTATION
                 if random.random() < mutation_probability:
                     new_tree = structure.geometric_semantic_tree_mutation(new_tree, m=m, cache=cache, store_in_cache=store_in_cache, fix_properties=fix_properties)
                 
@@ -269,8 +269,16 @@ class GeometricSemanticSymbolicRegressionRunner:
             parents = None
             offsprings = None
 
+            # ===========================
+            # NEXT GENERATION
+            # ===========================
+
         # ===========================
-        # FITNESS EVALUATION AND UPDATE
+        # END OF EVOLUTION
+        # ===========================
+
+        # ===========================
+        # LAST FITNESS EVALUATION AND UPDATE
         # ===========================
 
         fit_values = GeometricSemanticSymbolicRegressionRunner.__fitness_evaluation_and_update_statistics_and_result(
