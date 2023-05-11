@@ -42,7 +42,7 @@ class RowMajorMatrix(NeighborsTopology):
             return False
         for i in range(self.n_rows()):
             for j in range(self.n_cols()):
-                if self.get(i, j) != value.get(i, j):
+                if self.get((i, j)) != value.get((i, j)):
                     return False
         return True
     
@@ -58,13 +58,17 @@ class RowMajorMatrix(NeighborsTopology):
     def get_whole_collection(self, clone: bool = False) -> MutableSequence[T]:
         return deepcopy(self.__collection) if clone else self.__collection
     
-    def get(self, i: int, j: int, clone: bool = False) -> T:
+    def get(self, indices: tuple[int, ...], clone: bool = False) -> T:
+        i: int = indices[0]
+        j: int = indices[1]
         self.__check_row_index(i)
         self.__check_col_index(j)
         val: T = self.__collection[i * self.n_cols() + j]
         return deepcopy(val) if clone else val
     
-    def set(self, i: int, j: int, val: T, clone: bool = False) -> T:
+    def set(self, indices: tuple[int, ...], val: T, clone: bool = False) -> T:
+        i: int = indices[0]
+        j: int = indices[1]
         self.__check_row_index(i)
         self.__check_col_index(j)
         offset: int = i * self.n_cols() + j
@@ -91,10 +95,10 @@ class RowMajorMatrix(NeighborsTopology):
             for jj in range(j - 1, j + 2):
                 if ii == i and jj == j:
                     if include_current_point:
-                        result.append(self.get(ii,jj,clone=clone))
+                        result.append(self.get((ii,jj),clone=clone))
                 else:
                     if 0 <= ii < self.n_rows() and 0 <= jj < self.n_cols():
-                        result.append(self.get(ii,jj,clone=clone))
+                        result.append(self.get((ii,jj),clone=clone))
         return result
 
     def get_matrix_as_string(self) -> str:
@@ -103,7 +107,7 @@ class RowMajorMatrix(NeighborsTopology):
             s += '['
             s += '\t'
             for j in range(self.n_cols()):
-                s += str(self.get(i, j))
+                s += str(self.get((i, j)))
                 s += '\t'
             s += ']\n'
         s += ']\n'

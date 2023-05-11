@@ -1,6 +1,9 @@
 import argparse
 import os
+os.environ['NUMPY_EXPERIMENTAL_ARRAY_FUNCTION'] = '0'
+import numpy as np
 import time
+import cProfile
 from typing import Any
 from cagsgp.exps.GeometricSemanticSymbolicRegressionRunner import GeometricSemanticSymbolicRegressionRunner
 from cagsgp.util.ResultUtils import ResultUtils
@@ -13,7 +16,7 @@ if __name__ == '__main__':
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
 
     pop_size: int = 100
-    num_gen: int = 20
+    num_gen: int = 10
     m: float = 2.0
     crossover_probability: float = 0.9
     mutation_probability: float = 0.6
@@ -45,7 +48,8 @@ if __name__ == '__main__':
         
     for seed in seed_list:
         for max_depth in [6]:
-
+            pr = cProfile.Profile()
+            #pr.enable()
             t: tuple[dict[str, Any], str] = GeometricSemanticSymbolicRegressionRunner.run_symbolic_regression_with_cellular_automata_gsgp(
                 pop_size=pop_size,
                 pop_shape=pop_shape,
@@ -68,7 +72,8 @@ if __name__ == '__main__':
                 duplicates_elimination=duplicates_elimination,
                 neighbors_topology=neighbors_topology
             )
-
+            #pr.disable()
+            #pr.print_stats(sort='tottime')
             ResultUtils.write_result_to_json(path=folder_name, run_id=t[1], pareto_front_dict=t[0])
             print("NEXT")
 

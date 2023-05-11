@@ -21,5 +21,13 @@ class NeighborsTopology(ABC):
         pass
 
     @abstractmethod
+    def get(self, indices: tuple[int, ...], clone: bool = False) -> T:
+        pass
+
+    @abstractmethod
+    def set(self, indices: tuple[int, ...], val: T, clone: bool = False) -> T:
+        pass
+
+    @abstractmethod
     def neighborhood(self, indices: tuple[int, ...], include_current_point: bool = True, clone: bool = False) -> MutableSequence[T]:
         pass

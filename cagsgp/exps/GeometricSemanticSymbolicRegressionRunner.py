@@ -175,7 +175,6 @@ class GeometricSemanticSymbolicRegressionRunner:
         verbose: bool,
         parallelizer: Parallelizer,
         neighbors_topology_factory: NeighborsTopologyFactory
-
     ) -> dict[str, Any]:
         random.seed(seed)
         np.random.seed(seed)
@@ -189,6 +188,14 @@ class GeometricSemanticSymbolicRegressionRunner:
                                   }
         stats_collector: StatsCollectorSingle = StatsCollectorSingle(objective_name=rmse.class_name(), revert_sign=False)
         
+        neigh_top_indices: NeighborsTopology = neighbors_topology_factory.create(all_possible_coordinates, clone=False)
+        all_neighborhoods_indices: dict[tuple[int, ...], list[tuple[int, ...]]] = {}
+        for coordinate in all_possible_coordinates:
+            curr_neighs: list[tuple[int, ...]] = neigh_top_indices.neighborhood(coordinate, include_current_point=True, clone=False)
+            all_neighborhoods_indices[coordinate] = curr_neighs
+        curr_neighs = None
+        neigh_top_indices = None
+
         # ===========================
         # INITIALIZATION
         # ===========================
@@ -226,7 +233,7 @@ class GeometricSemanticSymbolicRegressionRunner:
             neighbors_topology: NeighborsTopology = neighbors_topology_factory.create(evaluated_individuals, clone=False)
 
             for coordinate in all_possible_coordinates:
-                competitors: list[tuple[int, Node, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False)
+                competitors: list[tuple[int, Node, float]] = [neighbors_topology.get(idx_tuple, clone=False) for idx_tuple in all_neighborhoods_indices[coordinate]]
                 competitors.sort(key=lambda x: x[2], reverse=False)
                 first: tuple[int, Node, float] = competitors[0]
                 second: tuple[int, Node, float] = competitors[1]
@@ -343,7 +350,7 @@ class GeometricSemanticSymbolicRegressionRunner:
             if best_ind_here_totally['Fitness']['RMSE'] < result['best']['Fitness']['RMSE']:
                 result['best'] = best_ind_here_totally
         
-        result['history'].append(deepcopy(result['best']))
+        result['history'].append(result['best'])
 
         return fit_values
 

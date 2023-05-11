@@ -48,7 +48,7 @@ class RowMajorCube(NeighborsTopology):
         for l in range(self.n_channels()):
             for i in range(self.n_rows()):
                 for j in range(self.n_cols()):
-                    if self.get(l, i, j) != value.get(l, i, j):
+                    if self.get((l, i, j)) != value.get((l, i, j)):
                         return False
         return True
     
@@ -67,14 +67,20 @@ class RowMajorCube(NeighborsTopology):
     def get_whole_collection(self, clone: bool = False) -> MutableSequence[T]:
         return deepcopy(self.__collection) if clone else self.__collection
     
-    def get(self, l: int, i: int, j: int, clone: bool = False) -> T:
+    def get(self, indices: tuple[int, ...], clone: bool = False) -> T:
+        l: int = indices[0]
+        i: int = indices[1]
+        j: int = indices[2]
         self.__check_channel_index(l)
         self.__check_row_index(i)
         self.__check_col_index(j)
         val: T = self.__collection[l * self.__size_of_a_single_channel + i * self.n_cols() + j]
         return deepcopy(val) if clone else val
     
-    def set(self, l: int, i: int, j: int, val: T, clone: bool = False) -> T:
+    def set(self, indices: tuple[int, ...], val: T, clone: bool = False) -> T:
+        l: int = indices[0]
+        i: int = indices[1]
+        j: int = indices[2]
         self.__check_channel_index(l)
         self.__check_row_index(i)
         self.__check_col_index(j)
@@ -105,10 +111,10 @@ class RowMajorCube(NeighborsTopology):
                 for jj in range(j - 1, j + 2):
                     if ll == l and ii == i and jj == j:
                         if include_current_point:
-                            result.append(self.get(ll,ii,jj,clone=clone))
+                            result.append(self.get((ll,ii,jj),clone=clone))
                     else:
                         if 0 <= ll < self.n_channels() and 0 <= ii < self.n_rows() and 0 <= jj < self.n_cols():
-                            result.append(self.get(ll,ii,jj,clone=clone))
+                            result.append(self.get((ll,ii,jj),clone=clone))
         return result
 
     def get_cube_as_string(self) -> str:
@@ -121,7 +127,7 @@ class RowMajorCube(NeighborsTopology):
                 s += '['
                 s += '\t'
                 for j in range(self.n_cols()):
-                    s += str(self.get(l, i, j))
+                    s += str(self.get((l, i, j)))
                     s += '\t'
                 s += ']\n'
             s += ']\n'
