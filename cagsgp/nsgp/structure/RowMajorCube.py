@@ -84,7 +84,13 @@ class RowMajorCube(NeighborsTopology):
         self.__collection[offset] = val
         return old_val
 
-    def neighborhood(self, indices: list[int], include_current_point: bool = True, clone: bool = False) -> MutableSequence[T]:
+    def size(self) -> int:
+        return self.__n_channels * self.__n_rows * self.__n_cols
+    
+    def shape(self) -> tuple[int, ...]:
+        return (self.__n_channels, self.__n_rows, self.__n_cols)
+
+    def neighborhood(self, indices: tuple[int, ...], include_current_point: bool = True, clone: bool = False) -> MutableSequence[T]:
         if len(indices) != 3:
             raise ValueError(f'The length of indices must be 3, found {len(indices)} instead.')
         l: int = indices[0]

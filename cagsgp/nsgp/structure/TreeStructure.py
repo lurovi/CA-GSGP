@@ -156,7 +156,7 @@ class TreeStructure:
     def safe_subtree_crossover_two_children(self, tree_1: Node, tree_2: Node) -> tuple[Node, Node]:
         return safe_subtree_crossover_two_children(tree_1, tree_2, max_depth=self.__max_depth)
 
-    def geometric_semantic_single_tree_crossover(self, tree_1: Node, tree_2: Node, cache: dict[Node, np.ndarray] = None, store_in_cache: bool = False) -> Node:
+    def geometric_semantic_single_tree_crossover(self, tree_1: Node, tree_2: Node, cache: dict[Node, np.ndarray] = None, store_in_cache: bool = False, fix_properties: bool = False) -> Node:
         return geometric_semantic_single_tree_crossover(tree1=tree_1,
                                                         tree2=tree_2,
                                                         internal_nodes=self.__operators,
@@ -165,9 +165,10 @@ class TreeStructure:
                                                         ephemeral_func=self.__ephemeral_func,
                                                         p=self.__p,
                                                         cache=cache,
-                                                        store_in_cache=store_in_cache)
+                                                        store_in_cache=store_in_cache,
+                                                        fix_properties=fix_properties)
 
-    def geometric_semantic_tree_mutation(self, tree: Node, m: float, cache: dict[Node, np.ndarray] = None, store_in_cache: bool = False) -> Node:
+    def geometric_semantic_tree_mutation(self, tree: Node, m: float, cache: dict[Node, np.ndarray] = None, store_in_cache: bool = False, fix_properties: bool = False) -> Node:
         return geometric_semantic_tree_mutation(tree=tree,
                                                 internal_nodes=self.__operators,
                                                 leaf_nodes=self.__terminals,
@@ -176,7 +177,8 @@ class TreeStructure:
                                                 p=self.__p,
                                                 m=m,
                                                 cache=cache,
-                                                store_in_cache=store_in_cache)
+                                                store_in_cache=store_in_cache,
+                                                fix_properties=fix_properties)
 
     def get_dict_representation(self, tree: Node) -> dict[int, str]:
         return tree.get_dict_repr(self.get_max_arity())

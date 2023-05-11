@@ -17,7 +17,8 @@ class MultiObjectiveMinimizationProblem(Problem):
                  evaluators: list[TreeEvaluator],
                  semantic_dupl_elim: DuplicateEliminationSemantic,
                  revert_sign: list[bool] = None,
-                 parallelizer: Parallelizer = None
+                 parallelizer: Parallelizer = None,
+                 compute_biodiversity: bool = False
                  ) -> None:
         
         if len(evaluators) < 1:
@@ -41,6 +42,7 @@ class MultiObjectiveMinimizationProblem(Problem):
         self.__stats_collector: StatsCollector = StatsCollector(objective_names=[e.class_name() for e in evaluators], revert_sign=self.__revert_sign)
 
         self.__biodiversity: dict[str, list[float]] = {"structural": [], "semantic": []}
+        self.__compute_biodiversity: bool = compute_biodiversity
 
     def stats_collector(self) -> StatsCollector:
         return self.__stats_collector
@@ -63,9 +65,10 @@ class MultiObjectiveMinimizationProblem(Problem):
 
         self.__stats_collector.update_fitness_stat_dict(n_gen=self.__n_gen, data=result_np)
 
-        current_biodiversity: dict[str, float] = self.__count_duplicates(all_inds=all_inds)
-        self.__biodiversity['structural'].append(current_biodiversity['structural'])
-        self.__biodiversity['semantic'].append(current_biodiversity['semantic'])
+        if self.__compute_biodiversity:
+            current_biodiversity: dict[str, float] = self.__count_duplicates(all_inds=all_inds)
+            self.__biodiversity['structural'].append(current_biodiversity['structural'])
+            self.__biodiversity['semantic'].append(current_biodiversity['semantic'])
 
     def __count_duplicates(self, all_inds: list[dict[str, Node]]) -> dict[str, float]:
         count_structural: float = 0

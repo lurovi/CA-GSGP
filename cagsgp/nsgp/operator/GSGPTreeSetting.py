@@ -16,10 +16,11 @@ class GSGPTreeSetting(IndividualSetting):
                  m: float,
                  cache: dict[Node, np.ndarray],
                  store_in_cache: bool,
+                 fix_properties: bool,
                  mutation_prob: float
                  ) -> None:
         super().__init__()
         self.__sampling: GSGPTreeSampling = GSGPTreeSampling(structure=structure)                                                        
-        self.__crossover: GSGPTreeCrossover = GSGPTreeCrossover(structure=structure, cache=cache, store_in_cache=store_in_cache)
-        self.__mutation: GSGPTreeMutation = GSGPTreeMutation(structure=structure, cache=cache, store_in_cache=store_in_cache, m=m, prob=mutation_prob)
+        self.__crossover: GSGPTreeCrossover = GSGPTreeCrossover(structure=structure, cache=cache, store_in_cache=store_in_cache, fix_properties=fix_properties)
+        self.__mutation: GSGPTreeMutation = GSGPTreeMutation(structure=structure, cache=cache, store_in_cache=store_in_cache, fix_properties=fix_properties, m=m, prob=mutation_prob)
         self.set(sampling=self.__sampling, crossover=self.__crossover, mutation=self.__mutation, duplicates_elimination=duplicates_elimination)

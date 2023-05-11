@@ -5,7 +5,7 @@ from genepro.node import Node
 from cagsgp.nsgp.evaluator.TreeEvaluator import TreeEvaluator
 
 
-class MSE(TreeEvaluator):
+class RMSE(TreeEvaluator):
     def __init__(self,
                  X: np.ndarray,
                  y: np.ndarray = None,
@@ -30,4 +30,4 @@ class MSE(TreeEvaluator):
 
     def evaluate(self, tree: Node) -> float:
         p: np.ndarray = np.core.umath.clip(Pointer(tree, cache=self.__cache, store_in_cache=self.__store_in_cache, fix_properties=self.__fix_properties)(self.__X), -1e+10, 1e+10)
-        return EvaluationMetrics.mean_squared_error(y=self.__y, p=p, linear_scaling=True, slope=None, intercept=None)
+        return EvaluationMetrics.root_mean_squared_error(y=self.__y, p=p, linear_scaling=True, slope=None, intercept=None)

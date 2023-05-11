@@ -10,6 +10,7 @@ class GSGPTreeMutation(Mutation):
                  structure: TreeStructure,
                  cache: dict[Node, np.ndarray],
                  store_in_cache: bool,
+                 fix_properties: bool,
                  m: float,
                  prob: float = 0.5
                  ) -> None:
@@ -18,6 +19,7 @@ class GSGPTreeMutation(Mutation):
         self.__m: float = m
         self.__cache: dict[Node, np.ndarray] = cache
         self.__store_in_cache: bool = store_in_cache
+        self.__fix_properties: bool = fix_properties
 
     def _do(self, problem, x, **kwargs):
         # for each individual
@@ -25,5 +27,6 @@ class GSGPTreeMutation(Mutation):
             x[i, 0] = self.__structure.geometric_semantic_tree_mutation(x[i, 0],
                                                                         m=self.__m,
                                                                         cache=self.__cache,
-                                                                        store_in_cache=self.__store_in_cache)
+                                                                        store_in_cache=self.__store_in_cache,
+                                                                        fix_properties=self.__fix_properties)
         return x

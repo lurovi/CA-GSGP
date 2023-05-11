@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Any, TypeVar
-from collections.abc import MutableSequence, Callable
+from collections.abc import MutableSequence
 from copy import deepcopy
 
 from cagsgp.nsgp.structure.NeighborsTopology import NeighborsTopology
@@ -73,7 +73,13 @@ class RowMajorMatrix(NeighborsTopology):
         self.__collection[offset] = val
         return old_val
 
-    def neighborhood(self, indices: list[int], include_current_point: bool = True, clone: bool = False) -> MutableSequence[T]:
+    def size(self) -> int:
+        return self.__n_rows * self.__n_cols
+    
+    def shape(self) -> tuple[int, ...]:
+        return (self.__n_rows, self.__n_cols)
+
+    def neighborhood(self, indices: tuple[int, ...], include_current_point: bool = True, clone: bool = False) -> MutableSequence[T]:
         if len(indices) != 2:
             raise ValueError(f'The length of indices must be 2, found {len(indices)} instead.')
         i: int = indices[0]

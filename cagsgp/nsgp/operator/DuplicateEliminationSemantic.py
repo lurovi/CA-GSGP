@@ -9,7 +9,8 @@ class DuplicateEliminationSemantic(ElementwiseDuplicateElimination):
     def __init__(self,
                  X: np.ndarray,
                  cache: dict[Node, np.ndarray] = None,
-                 store_in_cache: bool = False
+                 store_in_cache: bool = False,
+                 fix_properties: bool = False
                  ) -> None:
         super().__init__()
         self.__X: np.ndarray = X
@@ -18,6 +19,7 @@ class DuplicateEliminationSemantic(ElementwiseDuplicateElimination):
         else:
             self.__cache:  dict[Node, np.ndarray] = cache
         self.__store_in_cache: bool = store_in_cache
+        self.__fix_properties: bool = fix_properties
 
     def is_equal(self, a, b) -> bool:
         a: Node = a.X[0]
@@ -25,6 +27,6 @@ class DuplicateEliminationSemantic(ElementwiseDuplicateElimination):
         return self.node_semantic_equals(a, b)
     
     def node_semantic_equals(self, a: Node, b: Node) -> bool:
-        pointer_a: Node = Pointer(a, cache=self.__cache, store_in_cache=self.__store_in_cache)
-        pointer_b: Node = Pointer(b, cache=self.__cache, store_in_cache=self.__store_in_cache)
+        pointer_a: Node = Pointer(a, cache=self.__cache, store_in_cache=self.__store_in_cache, fix_properties=self.__fix_properties)
+        pointer_b: Node = Pointer(b, cache=self.__cache, store_in_cache=self.__store_in_cache, fix_properties=self.__fix_properties)
         return np.array_equal(pointer_a(self.__X), pointer_b(self.__X))

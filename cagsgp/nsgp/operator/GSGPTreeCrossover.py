@@ -8,13 +8,15 @@ class GSGPTreeCrossover(Crossover):
     def __init__(self,
                  structure: TreeStructure,
                  cache: dict[Node, np.ndarray],
-                 store_in_cache: bool
+                 store_in_cache: bool,
+                 fix_properties: bool
                  ) -> None:
         # define the crossover: number of parents and number of offsprings
         super().__init__(n_parents=2, n_offsprings=1, prob=1.0)
         self.__structure: TreeStructure = structure
         self.__cache: dict[Node, np.ndarray] = cache
         self.__store_in_cache: bool = store_in_cache
+        self.__fix_properties: bool = fix_properties
         
     def _do(self, problem, x, **kwargs):
         # The input of has the following shape (n_parents, n_matings, n_var)
@@ -28,7 +30,7 @@ class GSGPTreeCrossover(Crossover):
             # get the first and the second parent
             p1, p2 = x[0, k, 0], x[1, k, 0]
             # prepare the offsprings
-            aa = self.__structure.geometric_semantic_single_tree_crossover(p1, p2, cache=self.__cache, store_in_cache=self.__store_in_cache)
+            aa = self.__structure.geometric_semantic_single_tree_crossover(p1, p2, cache=self.__cache, store_in_cache=self.__store_in_cache, fix_properties=self.__fix_properties)
             y[0, k, 0] = aa
         
         return y

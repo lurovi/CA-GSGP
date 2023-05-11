@@ -1,6 +1,7 @@
 from pymoo.core.sampling import Sampling
 import numpy as np
 from boolcryptogp.nsgp.structure.TreeStructure import TreeStructure
+from genepro.node import Node
 
 
 class GSGPTreeSampling(Sampling):
