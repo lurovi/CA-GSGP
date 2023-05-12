@@ -12,7 +12,7 @@ class GSGPTreeCrossover(Crossover):
                  fix_properties: bool
                  ) -> None:
         # define the crossover: number of parents and number of offsprings
-        super().__init__(n_parents=2, n_offsprings=1, prob=1.0)
+        super().__init__(n_parents=2, n_offsprings=1, prob=0.9)
         self.__structure: TreeStructure = structure
         self.__cache: dict[Node, np.ndarray] = cache
         self.__store_in_cache: bool = store_in_cache

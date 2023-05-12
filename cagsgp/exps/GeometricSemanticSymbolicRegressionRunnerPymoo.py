@@ -70,10 +70,6 @@ class GeometricSemanticSymbolicRegressionRunnerPymoo:
         
         X_train: np.ndarray = dataset['training'][0]
         y_train: np.ndarray = dataset['training'][1]
-        #X_dev: np.ndarray = dataset['validation'][0]
-        #y_dev: np.ndarray = dataset['validation'][1]
-        #X_test: np.ndarray = dataset['test'][0]
-        #y_test: np.ndarray = dataset['test'][1]
         dataset = None
 
         cache: dict[Node, np.ndarray] = WeakKeyDictionary()

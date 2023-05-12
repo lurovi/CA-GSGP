@@ -6,6 +6,7 @@ from genepro.variation import generate_random_tree, safe_subtree_mutation, safe_
 
 from genepro.node_impl import *
 from genepro.node import Node
+from genepro.storage import WeakCache
 
 from genepro.util import compute_linear_model_discovered_in_math_formula_interpretability_paper, \
     concatenate_nodes_with_binary_operator, get_subtree_as_full_list, tree_from_prefix_repr
@@ -156,7 +157,7 @@ class TreeStructure:
     def safe_subtree_crossover_two_children(self, tree_1: Node, tree_2: Node) -> tuple[Node, Node]:
         return safe_subtree_crossover_two_children(tree_1, tree_2, max_depth=self.__max_depth)
 
-    def geometric_semantic_single_tree_crossover(self, tree_1: Node, tree_2: Node, cache: dict[Node, np.ndarray] = None, store_in_cache: bool = False, fix_properties: bool = False) -> Node:
+    def geometric_semantic_single_tree_crossover(self, tree_1: Node, tree_2: Node, cache: WeakCache = None, store_in_cache: bool = False, fix_properties: bool = False) -> Node:
         return geometric_semantic_single_tree_crossover(tree1=tree_1,
                                                         tree2=tree_2,
                                                         internal_nodes=self.__operators,
@@ -168,7 +169,7 @@ class TreeStructure:
                                                         store_in_cache=store_in_cache,
                                                         fix_properties=fix_properties)
 
-    def geometric_semantic_tree_mutation(self, tree: Node, m: float, cache: dict[Node, np.ndarray] = None, store_in_cache: bool = False, fix_properties: bool = False) -> Node:
+    def geometric_semantic_tree_mutation(self, tree: Node, m: float, cache: WeakCache = None, store_in_cache: bool = False, fix_properties: bool = False) -> Node:
         return geometric_semantic_tree_mutation(tree=tree,
                                                 internal_nodes=self.__operators,
                                                 leaf_nodes=self.__terminals,

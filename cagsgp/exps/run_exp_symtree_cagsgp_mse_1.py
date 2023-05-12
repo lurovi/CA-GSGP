@@ -50,7 +50,7 @@ if __name__ == '__main__':
     for seed in seed_list:
         for max_depth in [6]:
             pr = cProfile.Profile()
-            #pr.enable()
+            pr.enable()
             t: tuple[dict[str, Any], str] = GeometricSemanticSymbolicRegressionRunner.run_symbolic_regression_with_cellular_automata_gsgp(
                 pop_size=pop_size,
                 pop_shape=pop_shape,
@@ -74,8 +74,8 @@ if __name__ == '__main__':
                 neighbors_topology=neighbors_topology,
                 radius=radius
             )
-            #pr.disable()
-            #pr.print_stats(sort='tottime')
+            pr.disable()
+            pr.print_stats(sort='tottime')
             ResultUtils.write_result_to_json(path=folder_name, run_id=t[1], pareto_front_dict=t[0])
             print("NEXT")
 

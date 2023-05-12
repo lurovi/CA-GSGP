@@ -15,14 +15,15 @@ class StatsCollectorSingle:
 
     def update_fitness_stat_dict(self, n_gen: int, data: list[float]) -> None:
         da: list[float] = [-val for val in data] if self.__revert_sign else data
-        length: int = len(da)
-        sum_da: float = sum(da)
-        mean_da: float = sum_da / float(length)
-        max_da: float = max(da)
-        min_da: float = min(da)
-        median_da: float = statistics.median(da)
-        std_da: float = statistics.pstdev(da, mu=mean_da)
-
+        da: np.ndarray = np.array(da, dtype=np.float32)
+        
+        sum_da: float = float(np.sum(da))
+        mean_da: float = float(np.mean(da))
+        max_da: float = float(np.amax(da))
+        min_da: float = float(np.amin(da))
+        median_da: float = float(np.median(da))
+        std_da: float = float(np.std(da))
+        
         d: dict[str, float] = {"mean": mean_da,
                                "median": median_da,
                                "min": min_da,

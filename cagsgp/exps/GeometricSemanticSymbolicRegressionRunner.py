@@ -2,10 +2,8 @@ from collections.abc import Callable
 from copy import deepcopy
 from functools import partial
 import itertools
-import math
 import time
 from typing import Any
-from weakref import WeakKeyDictionary
 
 from numpy.random import Generator
 from prettytable import PrettyTable
@@ -29,6 +27,7 @@ import numpy as np
 import random
 
 from genepro.node_impl import Constant
+from genepro.storage import WeakCache
 from genepro.util import get_subtree_as_full_list
 
 
@@ -68,13 +67,9 @@ class GeometricSemanticSymbolicRegressionRunner:
         
         X_train: np.ndarray = dataset['training'][0]
         y_train: np.ndarray = dataset['training'][1]
-        #X_dev: np.ndarray = dataset['validation'][0]
-        #y_dev: np.ndarray = dataset['validation'][1]
-        #X_test: np.ndarray = dataset['test'][0]
-        #y_test: np.ndarray = dataset['test'][1]
         dataset = None
 
-        cache: dict[Node, np.ndarray] = WeakKeyDictionary()
+        cache: WeakCache = WeakCache()
 
         if multiprocess:
             parallelizer: Parallelizer = MultiProcessingParallelizer(-1)
@@ -170,7 +165,7 @@ class GeometricSemanticSymbolicRegressionRunner:
         crossover_probability: float,
         mutation_probability: float,
         m: float,
-        cache: dict[Node, np.ndarray],
+        cache: WeakCache,
         store_in_cache: bool,
         fix_properties: bool,
         verbose: bool,
@@ -181,7 +176,7 @@ class GeometricSemanticSymbolicRegressionRunner:
         np.random.seed(seed)
 
         rmse: TreeEvaluator = evaluators[0]
-        fitness: dict[Node, float] = WeakKeyDictionary()
+        fitness: WeakCache = WeakCache()
         all_possible_coordinates: list[tuple[int, ...]] = [elem for elem in itertools.product(*[list(range(s)) for s in pop_shape])]
         result: dict[str, Any] = {'best': {}, 'history': []}
         stats_collector: StatsCollectorSingle = StatsCollectorSingle(objective_name=rmse.class_name(), revert_sign=False)
@@ -268,7 +263,8 @@ class GeometricSemanticSymbolicRegressionRunner:
             pop = offsprings
             parents = None
             offsprings = None
-
+            new_tree = None
+            
             # ===========================
             # NEXT GENERATION
             # ===========================
@@ -301,7 +297,7 @@ class GeometricSemanticSymbolicRegressionRunner:
     def __fitness_evaluation_and_update_statistics_and_result(
         parallelizer: Parallelizer,
         rmse: TreeEvaluator,
-        fitness: dict[Node, float],
+        fitness: WeakCache,
         pop: list[Node],
         pop_size: int,
         stats_collector: StatsCollectorSingle,
@@ -322,7 +318,7 @@ class GeometricSemanticSymbolicRegressionRunner:
             pp: Callable = partial(single_evaluation_single_objective_no_fit_update, evaluator=rmse, fitness=fitness)
             fit_values: list[float] = parallelizer.parallelize(pp, all_inds)
             for i in range(len(fit_values)):
-                fitness[pop[i]] = fit_values[i]
+                fitness.set(pop[i], fit_values[i])
         
         # ===========================
         # UPDATE STATISTICS
@@ -343,12 +339,12 @@ class GeometricSemanticSymbolicRegressionRunner:
         # UPDATE BEST AND HISTORY
         # ===========================
 
-        min_value: float = stats_collector.get_fitness_stat(current_gen, 'min')
+        min_value: float = min(fit_values)
         index_of_min_value: int = fit_values.index(min_value)
         best_ind_here: Node = pop[index_of_min_value]
         best_ind_here_totally: dict[str, Any] = {
-            'ParsableTree': str(get_subtree_as_full_list(best_ind_here)),
-            'LatexTree': ResultUtils.safe_latex_format(best_ind_here),
+            'ParsableTree': '', #str(get_subtree_as_full_list(best_ind_here)),
+            'LatexTree': '', #ResultUtils.safe_latex_format(best_ind_here),
             'Fitness': {'RMSE': min_value}
         }
 
@@ -363,16 +359,17 @@ class GeometricSemanticSymbolicRegressionRunner:
         return fit_values
 
 
-def single_evaluation_single_objective(individual: Node, evaluator: TreeEvaluator, fitness: dict[Node, float]) -> float:
-    if individual in fitness:
-        return fitness[individual]
+def single_evaluation_single_objective(individual: Node, evaluator: TreeEvaluator, fitness: WeakCache) -> float:
+    r: float = fitness.get(individual)
+    if r is not None:
+        return r
     f: float = evaluator.evaluate(individual)
-    fitness[individual] = f
+    fitness.set(individual, f)
     return f
 
-def single_evaluation_single_objective_no_fit_update(individual: Node, evaluator: TreeEvaluator, fitness: dict[Node, float]) -> float:
-    if individual in fitness:
-        return fitness[individual]
+def single_evaluation_single_objective_no_fit_update(individual: Node, evaluator: TreeEvaluator, fitness: WeakCache) -> float:
+    r: float = fitness.get(individual)
+    if r is not None:
+        return r
     f: float = evaluator.evaluate(individual)
     return f
-
