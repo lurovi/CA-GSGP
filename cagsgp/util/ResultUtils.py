@@ -82,6 +82,7 @@ class ResultUtils:
                      num_gen: int,
                      num_offsprings: int,
                      max_depth: int,
+                     generation_strategy: str,
                      pressure: int,
                      pop_shape: tuple[int, ...],
                      crossover_probability: float,
@@ -106,6 +107,7 @@ class ResultUtils:
         pareto_front_dict["parameters"]["NumGen"] = num_gen
         pareto_front_dict["parameters"]["NumOffsprings"] = num_offsprings
         pareto_front_dict["parameters"]["MaxDepth"] = max_depth
+        pareto_front_dict["parameters"]["GenerationStrategy"] = generation_strategy
         pareto_front_dict["parameters"]["Pressure"] = pressure
         pareto_front_dict["parameters"]["CrossoverProbability"] = crossover_probability
         pareto_front_dict["parameters"]["MutationProbability"] = mutation_probability
@@ -159,6 +161,7 @@ class ResultUtils:
         num_gen: int,
         num_offsprings: int,
         max_depth: int,
+        generation_strategy: str,
         pressure: int,
         pop_shape: tuple[int, ...],
         crossover_probability: float,
@@ -184,6 +187,7 @@ class ResultUtils:
         pareto_front_dict["parameters"]["NumGen"] = num_gen
         pareto_front_dict["parameters"]["NumOffsprings"] = num_offsprings
         pareto_front_dict["parameters"]["MaxDepth"] = max_depth
+        pareto_front_dict["parameters"]["GenerationStrategy"] = generation_strategy
         pareto_front_dict["parameters"]["Pressure"] = pressure
         pareto_front_dict["parameters"]["CrossoverProbability"] = crossover_probability
         pareto_front_dict["parameters"]["MutationProbability"] = mutation_probability

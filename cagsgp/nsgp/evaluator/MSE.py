@@ -3,14 +3,14 @@ from cagsgp.util.EvaluationMetrics import EvaluationMetrics
 from genepro.node_impl import Pointer
 from genepro.node import Node
 from cagsgp.nsgp.evaluator.TreeEvaluator import TreeEvaluator
-from genepro.storage import WeakCache
+from genepro.storage import Cache
 
 
 class MSE(TreeEvaluator):
     def __init__(self,
                  X: np.ndarray,
                  y: np.ndarray = None,
-                 cache: WeakCache = None,
+                 cache: Cache = None,
                  store_in_cache: bool = False,
                  fix_properties: bool = False
                  ) -> None:
@@ -25,7 +25,7 @@ class MSE(TreeEvaluator):
                 f"y must be one-dimensional. The number of dimensions that have been detected in y are, on the contrary, {len(y.shape)}.")
         self.__X: np.ndarray = X
         self.__y: np.ndarray = y
-        self.__cache: WeakCache = cache
+        self.__cache: Cache = cache
         self.__store_in_cache: bool = store_in_cache
         self.__fix_properties: bool = fix_properties
 

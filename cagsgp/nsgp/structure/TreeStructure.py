@@ -1,12 +1,12 @@
 from typing import Any
 from collections.abc import Callable
 
-from genepro.variation import generate_random_tree, safe_subtree_mutation, safe_subtree_crossover_two_children, \
+from genepro.variation import generate_tree_wrt_strategy, safe_subtree_mutation, safe_subtree_crossover_two_children, \
     generate_random_forest, safe_subforest_mutation, safe_subforest_one_point_crossover_two_children, geometric_semantic_single_tree_crossover, geometric_semantic_tree_mutation
 
 from genepro.node_impl import *
 from genepro.node import Node
-from genepro.storage import WeakCache
+from genepro.storage import Cache
 
 from genepro.util import compute_linear_model_discovered_in_math_formula_interpretability_paper, \
     concatenate_nodes_with_binary_operator, get_subtree_as_full_list, tree_from_prefix_repr
@@ -23,9 +23,12 @@ class TreeStructure:
                  constants: list[Constant] = None,
                  ephemeral_func: Callable = None,
                  normal_distribution_parameters: list[tuple[float, float]] = None,
-                 p: list[float] = None
+                 p: list[float] = None,
+                 generation_strategy: str = 'grow',
+                 fixed_constants: list[Constant] = None
                  ) -> None:
         super().__init__()
+        self.__generation_strategy: str = generation_strategy
         self.__p: list[float] = p
         self.__size: int = len(operators) + n_features + 1
         if normal_distribution_parameters is not None:
@@ -48,17 +51,24 @@ class TreeStructure:
         self.__max_arity: int = max([int(op.arity) for op in operators])
         self.__max_n_nodes: int = int((self.__max_arity ** self.__n_layers - 1)/float(self.__max_arity - 1))
         self.__constants: list[Constant] = []
+        self.__fixed_constants: list[Constant] = []
         if constants is not None:
             self.__constants = deepcopy(constants)
+        if fixed_constants is not None:
+            self.__fixed_constants = deepcopy(fixed_constants)
         self.__ephemeral_func: Callable = ephemeral_func
         self.__n_constants: int = len(self.__constants)
+        self.__n_fixed_constants: int = len(self.__fixed_constants)
         self.__terminals: list[Node] = self.__features + self.__constants
-        self.__n_terminals: int = len(self.__terminals) + (1 if self.__ephemeral_func is not None else 0)
+        self.__n_terminals: int = len(self.__terminals) + (1 if self.__ephemeral_func is not None or self.__fixed_constants != [] else 0)
 
         self.__encoding_func_dict: dict[str, TreeEncoder] = {}
 
     def get_p(self) -> list[float]:
         return deepcopy(self.__p)
+
+    def get_generation_strategy(self) -> str:
+        return self.__generation_strategy
 
     def get_encoding_type_strings(self) -> list[str]:
         return list(self.__encoding_func_dict.keys())
@@ -114,6 +124,11 @@ class TreeStructure:
             raise IndexError(f"{idx} is out of range as index of constants.")
         return self.__constants[idx]
 
+    def get_fixed_constant(self, idx: int) -> Constant:
+        if not (0 <= idx < self.get_number_of_fixed_constants()):
+            raise IndexError(f"{idx} is out of range as index of fixed constants.")
+        return self.__fixed_constants[idx]
+
     def sample_ephemeral_random_constant(self) -> float:
         if self.__ephemeral_func is None:
             raise AttributeError("Ephemeral function has not been defined in the constructor of this instance.")
@@ -127,6 +142,9 @@ class TreeStructure:
 
     def get_number_of_constants(self) -> int:
         return self.__n_constants
+
+    def get_number_of_fixed_constants(self) -> int:
+        return self.__n_fixed_constants
 
     def get_number_of_terminals(self) -> int:
         return self.__n_terminals
@@ -147,17 +165,19 @@ class TreeStructure:
         return self.__size
 
     def generate_tree(self) -> Node:
-        return generate_random_tree(self.__operators, self.__terminals, max_depth=self.get_max_depth(),
-                                    curr_depth=0, ephemeral_func=self.__ephemeral_func, p=self.__p)
+        return generate_tree_wrt_strategy(self.__operators, self.__terminals, max_depth=self.get_max_depth(),
+                                    ephemeral_func=self.__ephemeral_func, p=self.__p,
+                                    generation_strategy=self.__generation_strategy, fixed_constants=self.__fixed_constants)
 
     def safe_subtree_mutation(self, tree: Node) -> Node:
         return safe_subtree_mutation(tree, self.__operators, self.__terminals, max_depth=self.__max_depth,
-                                     ephemeral_func=self.__ephemeral_func, p=self.__p)
+                                     ephemeral_func=self.__ephemeral_func, p=self.__p, fixed_constants=self.__fixed_constants,
+                                     generation_strategy=self.__generation_strategy)
 
     def safe_subtree_crossover_two_children(self, tree_1: Node, tree_2: Node) -> tuple[Node, Node]:
         return safe_subtree_crossover_two_children(tree_1, tree_2, max_depth=self.__max_depth)
 
-    def geometric_semantic_single_tree_crossover(self, tree_1: Node, tree_2: Node, cache: WeakCache = None, store_in_cache: bool = False, fix_properties: bool = False) -> Node:
+    def geometric_semantic_single_tree_crossover(self, tree_1: Node, tree_2: Node, cache: Cache = None, store_in_cache: bool = False, fix_properties: bool = False) -> Node:
         return geometric_semantic_single_tree_crossover(tree1=tree_1,
                                                         tree2=tree_2,
                                                         internal_nodes=self.__operators,
@@ -167,9 +187,11 @@ class TreeStructure:
                                                         p=self.__p,
                                                         cache=cache,
                                                         store_in_cache=store_in_cache,
-                                                        fix_properties=fix_properties)
+                                                        fix_properties=fix_properties,
+                                                        generation_strategy=self.__generation_strategy,
+                                                        fixed_constants=self.__fixed_constants)
 
-    def geometric_semantic_tree_mutation(self, tree: Node, m: float, cache: WeakCache = None, store_in_cache: bool = False, fix_properties: bool = False) -> Node:
+    def geometric_semantic_tree_mutation(self, tree: Node, m: float, cache: Cache = None, store_in_cache: bool = False, fix_properties: bool = False) -> Node:
         return geometric_semantic_tree_mutation(tree=tree,
                                                 internal_nodes=self.__operators,
                                                 leaf_nodes=self.__terminals,
@@ -179,7 +201,9 @@ class TreeStructure:
                                                 m=m,
                                                 cache=cache,
                                                 store_in_cache=store_in_cache,
-                                                fix_properties=fix_properties)
+                                                fix_properties=fix_properties,
+                                                generation_strategy=self.__generation_strategy,
+                                                fixed_constants=self.__fixed_constants)
 
     def get_dict_representation(self, tree: Node) -> dict[int, str]:
         return tree.get_dict_repr(self.get_max_arity())
@@ -244,12 +268,15 @@ class TreeStructure:
         return generate_random_forest(internal_nodes=self.__operators, leaf_nodes=self.__terminals,
                                       max_depth=self.get_max_depth(), ephemeral_func=self.__ephemeral_func,
                                       p=self.__p, n_trees=n_trees, n_trees_min=n_trees_min, n_trees_max=n_trees_max,
-                                      tree_prob=tree_prob)
+                                      tree_prob=tree_prob, generation_strategy=self.__generation_strategy,
+                                      fixed_constants=self.__fixed_constants)
 
     def safe_subforest_mutation(self, forest: list[Node]) -> list[Node]:
         return safe_subforest_mutation(forest, internal_nodes=self.__operators, leaf_nodes=self.__terminals,
                                        max_depth=self.get_max_depth(),
-                                       ephemeral_func=self.__ephemeral_func, p=self.__p)
+                                       ephemeral_func=self.__ephemeral_func, p=self.__p,
+                                       generation_strategy=self.__generation_strategy,
+                                       fixed_constants=self.__fixed_constants)
 
     @staticmethod
     def safe_subforest_one_point_crossover_two_children(forest_1: list[Node], forest_2: list[Node], max_length: int = None) -> tuple[list[Node], list[Node]]:

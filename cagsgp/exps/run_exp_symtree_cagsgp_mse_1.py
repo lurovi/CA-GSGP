@@ -16,13 +16,15 @@ if __name__ == '__main__':
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
 
     pop_size: int = 100
-    num_gen: int = 10
+    num_gen: int = 100
     m: float = 2.0
+    max_depth: int = 6
+    generation_strategy: str = 'half'
     radius: int = 1
     crossover_probability: float = 0.9
     mutation_probability: float = 0.6
 
-    dataset_name: str = 'korns12'
+    dataset_name: str = 'vladislavleva4'
     neighbors_topology: str = 'matrix'
     duplicates_elimination: str = 'nothing'
     pop_shape: tuple[int, ...] = (10, 10)
@@ -48,36 +50,35 @@ if __name__ == '__main__':
     start_time: float = time.time()
         
     for seed in seed_list:
-        for max_depth in [6]:
-            pr = cProfile.Profile()
-            pr.enable()
-            t: tuple[dict[str, Any], str] = GeometricSemanticSymbolicRegressionRunner.run_symbolic_regression_with_cellular_automata_gsgp(
-                pop_size=pop_size,
-                pop_shape=pop_shape,
-                num_gen=num_gen,
-                max_depth=max_depth,
-                operators=operators,
-                low_erc=low_erc,
-                high_erc=high_erc,
-                n_constants=n_constants,
-                dataset_name=dataset_name,
-                dataset_path=None,
-                seed=seed,
-                multiprocess=False,
-                verbose=True,
-                crossover_probability=crossover_probability,
-                mutation_probability=mutation_probability,
-                m=m,
-                store_in_cache=True,
-                fix_properties=True,
-                duplicates_elimination=duplicates_elimination,
-                neighbors_topology=neighbors_topology,
-                radius=radius
-            )
-            pr.disable()
-            pr.print_stats(sort='tottime')
-            ResultUtils.write_result_to_json(path=folder_name, run_id=t[1], pareto_front_dict=t[0])
-            print("NEXT")
+        pr = cProfile.Profile()
+        #pr.enable()
+        t: tuple[dict[str, Any], str] = GeometricSemanticSymbolicRegressionRunner.run_symbolic_regression_with_cellular_automata_gsgp(
+            pop_size=pop_size,
+            pop_shape=pop_shape,
+            num_gen=num_gen,
+            max_depth=max_depth,
+            generation_strategy=generation_strategy,
+            operators=operators,
+            low_erc=low_erc,
+            high_erc=high_erc,
+            n_constants=n_constants,
+            dataset_name=dataset_name,
+            dataset_path=None,
+            seed=seed,
+            multiprocess=False,
+            verbose=True,
+            gen_verbosity_level=20,
+            crossover_probability=crossover_probability,
+            mutation_probability=mutation_probability,
+            m=m,
+            duplicates_elimination=duplicates_elimination,
+            neighbors_topology=neighbors_topology,
+            radius=radius
+        )
+        #pr.disable()
+        #pr.print_stats(sort='tottime')
+        ResultUtils.write_result_to_json(path=folder_name, run_id=t[1], pareto_front_dict=t[0])
+        print("NEXT")
 
     end_time: float = time.time()
     execution_time_in_minutes: float = (end_time - start_time) * (1 / 60)
