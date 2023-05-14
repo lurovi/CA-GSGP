@@ -110,7 +110,7 @@ class GeometricSemanticSymbolicRegressionRunner:
             ephemeral_func: Callable = None
 
         if n_constants > 0:
-            constants: list[Constant] = [Constant(ephemeral_func()) for _ in range(n_constants)]
+            constants: list[Constant] = [Constant(round(ephemeral_func(), 2), known_n_samples=X_train.shape[0]) for _ in range(n_constants)]
 
         # ===========================
         # TREE STRUCTURE
