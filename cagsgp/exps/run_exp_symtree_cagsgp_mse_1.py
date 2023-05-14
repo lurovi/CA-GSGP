@@ -12,6 +12,7 @@ from genepro.node_impl import Plus, Minus, Times, Div
 
 
 if __name__ == '__main__':
+    dataset_names: list[str] = ['airfoil', 'bioav', 'concrete', 'parkinson', 'ppb', 'slump', 'toxicity', 'vladislavleva-14', 'yacht']
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
 
@@ -20,12 +21,9 @@ if __name__ == '__main__':
     m: float = 2.0
     max_depth: int = 6
     generation_strategy: str = 'half'
-    radius: int = 1
     crossover_probability: float = 0.9
     mutation_probability: float = 0.6
 
-    dataset_name: str = 'vladislavleva4'
-    neighbors_topology: str = 'matrix'
     duplicates_elimination: str = 'nothing'
     pop_shape: tuple[int, ...] = (10, 10)
 
@@ -48,37 +46,41 @@ if __name__ == '__main__':
         seed_list: list[int] = [int(i) for i in seed.split(",")]
 
     start_time: float = time.time()
-        
-    for seed in seed_list:
-        pr = cProfile.Profile()
-        #pr.enable()
-        t: tuple[dict[str, Any], str] = GeometricSemanticSymbolicRegressionRunner.run_symbolic_regression_with_cellular_automata_gsgp(
-            pop_size=pop_size,
-            pop_shape=pop_shape,
-            num_gen=num_gen,
-            max_depth=max_depth,
-            generation_strategy=generation_strategy,
-            operators=operators,
-            low_erc=low_erc,
-            high_erc=high_erc,
-            n_constants=n_constants,
-            dataset_name=dataset_name,
-            dataset_path=None,
-            seed=seed,
-            multiprocess=False,
-            verbose=True,
-            gen_verbosity_level=20,
-            crossover_probability=crossover_probability,
-            mutation_probability=mutation_probability,
-            m=m,
-            duplicates_elimination=duplicates_elimination,
-            neighbors_topology=neighbors_topology,
-            radius=radius
-        )
-        #pr.disable()
-        #pr.print_stats(sort='tottime')
-        ResultUtils.write_result_to_json(path=folder_name, run_id=t[1], pareto_front_dict=t[0])
-        print("NEXT")
+
+    for neighbors_topology in ['matrix']:
+        for radius in [1]:
+            for dataset_name in ['yacht']:    
+                for seed in [1]:
+                    pr = cProfile.Profile()
+                    #pr.enable()
+                    dataset_path = codebase_folder + 'python_data/CA-GSGP/' + 'datasets_csv/' + dataset_name + '/' + 'train' + str(seed) + '.csv'
+                    t: tuple[dict[str, Any], str] = GeometricSemanticSymbolicRegressionRunner.run_symbolic_regression_with_cellular_automata_gsgp(
+                        pop_size=pop_size,
+                        pop_shape=pop_shape,
+                        num_gen=num_gen,
+                        max_depth=max_depth,
+                        generation_strategy=generation_strategy,
+                        operators=operators,
+                        low_erc=low_erc,
+                        high_erc=high_erc,
+                        n_constants=n_constants,
+                        dataset_name=dataset_name,
+                        dataset_path=dataset_path,
+                        seed=seed,
+                        multiprocess=False,
+                        verbose=True,
+                        gen_verbosity_level=50,
+                        crossover_probability=crossover_probability,
+                        mutation_probability=mutation_probability,
+                        m=m,
+                        duplicates_elimination=duplicates_elimination,
+                        neighbors_topology=neighbors_topology,
+                        radius=radius
+                    )
+                    #pr.disable()
+                    #pr.print_stats(sort='tottime')
+                    ResultUtils.write_result_to_json(path=folder_name, run_id=t[1], pareto_front_dict=t[0])
+                    print("NEXT")
 
     end_time: float = time.time()
     execution_time_in_minutes: float = (end_time - start_time) * (1 / 60)

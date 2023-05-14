@@ -1,13 +1,45 @@
 import random
 import numpy as np
 from sklearn.datasets import make_friedman1
-
+import pandas as pd
 from cagsgp.util.PicklePersist import PicklePersist
 
 
 class DatasetGenerator:
     def __init__(self) -> None:
         super().__init__()
+
+    @staticmethod
+    def convert_text_dataset_to_csv(input_path: str, output_path: str) -> pd.DataFrame:
+        file = open(input_path, 'r')
+        lines: list[str] = file.readlines()
+        file.close()
+
+        n_features: int = int(lines[0].split()[0])
+        n_samples: int = int(lines[1].split()[0])
+        
+        lines = lines[2:]
+        d: dict[str, list[float]] = {str(k): [] for k in range(n_features)}
+        d['target'] = []
+
+        for line in lines:
+            l = line.split()
+            for i in range(len(l)):
+                if i == len(l) - 1:
+                    d['target'].append(float(l[i]))
+                else:
+                    d[str(i)].append(float(l[i]))
+        d: pd.DataFrame = pd.DataFrame(d)
+        d.to_csv(output_path+'.csv', index=False)
+        return d
+
+    @staticmethod
+    def read_csv_data(path: str) -> tuple[np.ndarray, np.ndarray]:
+        d: pd.DataFrame = pd.read_csv(path)
+        y: np.ndarray = d['target'].to_numpy()
+        d.drop('target', axis=1, inplace=True)
+        X: np.ndarray = d.to_numpy()
+        return (X, y)
 
     @staticmethod
     def generate_dataset(dataset_name: str, seed: int, reset: bool = False, path: str = None) -> dict[str, tuple[np.ndarray, np.ndarray]]:

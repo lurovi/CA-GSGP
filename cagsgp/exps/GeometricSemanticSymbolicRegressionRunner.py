@@ -67,13 +67,16 @@ class GeometricSemanticSymbolicRegressionRunner:
         # ===========================
         
         if dataset_path is not None:        
-            dataset: dict[str, tuple[np.ndarray, np.ndarray]] = PicklePersist.decompress_pickle(dataset_path)
+            #dataset: dict[str, tuple[np.ndarray, np.ndarray]] = PicklePersist.decompress_pickle(dataset_path)
+            dataset: tuple[np.ndarray, np.ndarray] = DatasetGenerator.read_csv_data(path=dataset_path)
+            X_train: np.ndarray = dataset[0]
+            y_train: np.ndarray = dataset[1]
+            dataset = None
         else:
             dataset: dict[str, tuple[np.ndarray, np.ndarray]] = DatasetGenerator.generate_dataset(dataset_name=dataset_name, seed=seed, reset=False, path=None)
-        
-        X_train: np.ndarray = dataset['training'][0]
-        y_train: np.ndarray = dataset['training'][1]
-        dataset = None
+            X_train: np.ndarray = dataset['training'][0]
+            y_train: np.ndarray = dataset['training'][1]
+            dataset = None
 
         if multiprocess:
             parallelizer: Parallelizer = MultiProcessingParallelizer(-1)
