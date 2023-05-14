@@ -1,7 +1,7 @@
 from typing import Any, TypeVar
 from collections.abc import Callable
 
-from evogpy.util.parallel.Parallelizer import Parallelizer
+from cagsgp.util.parallel.Parallelizer import Parallelizer
 
 T = TypeVar('T')
 

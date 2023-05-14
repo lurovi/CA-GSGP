@@ -185,9 +185,9 @@ class GeometricSemanticSymbolicRegressionRunner:
             duplicates_elimination=duplicates_elimination
         )
         
-        run_id: str = f"symbolictreesRMSECAGSGPSOO-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-neighbors_topology_{neighbors_topology}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(1.0, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-radius_{str(radius)}-genstrategy_{generation_strategy}-SEED{seed}"
+        run_id: str = f"symbolictreesRMSECAGSGPSOO-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-neighbors_topology_{neighbors_topology}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(crossover_probability, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-radius_{str(radius)}-genstrategy_{generation_strategy}-SEED{seed}"
         if verbose:
-            print(f"\nSYMBOLIC TREES RMSE CA-GSGP SOO: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Neighbors Topology {neighbors_topology}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}, Crossover Probability {str(round(1.0, 2))}, Mutation Probability {str(round(mutation_probability, 2))}, M {str(round(m, 2))}, Radius {str(radius)}, Generation Strategy {generation_strategy}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
+            print(f"\nSYMBOLIC TREES RMSE CA-GSGP SOO: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Neighbors Topology {neighbors_topology}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}, Crossover Probability {str(round(crossover_probability, 2))}, Mutation Probability {str(round(mutation_probability, 2))}, M {str(round(m, 2))}, Radius {str(radius)}, Generation Strategy {generation_strategy}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
         
         return pareto_front_df, run_id
     

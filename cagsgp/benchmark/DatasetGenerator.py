@@ -1,6 +1,7 @@
 import random
 import numpy as np
 from sklearn.datasets import make_friedman1
+from sklearn.preprocessing import StandardScaler
 import pandas as pd
 from cagsgp.util.PicklePersist import PicklePersist
 
@@ -10,7 +11,7 @@ class DatasetGenerator:
         super().__init__()
 
     @staticmethod
-    def convert_text_dataset_to_csv(input_path: str, output_path: str) -> pd.DataFrame:
+    def convert_text_dataset_to_csv(input_path: str, output_path: str, scale: bool = False) -> pd.DataFrame:
         file = open(input_path, 'r')
         lines: list[str] = file.readlines()
         file.close()
@@ -30,6 +31,20 @@ class DatasetGenerator:
                 else:
                     d[str(i)].append(float(l[i]))
         d: pd.DataFrame = pd.DataFrame(d)
+
+        if scale:
+            y: np.ndarray = d['target'].to_numpy()
+            d.drop('target', axis=1, inplace=True)
+            X: np.ndarray = d.to_numpy()
+
+            scaler: StandardScaler = StandardScaler()
+            scaler = scaler.fit(X)
+            X = scaler.transform(X)
+            d = pd.DataFrame(X)
+            d.rename({i: str(i) for i in range(n_features)}, inplace=True)
+            d["target"] = y
+            
+
         d.to_csv(output_path+'.csv', index=False)
         return d
 

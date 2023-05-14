@@ -3,7 +3,7 @@ from typing import Any, TypeVar
 from collections.abc import Callable
 import multiprocessing as mp
 
-from evogpy.util.parallel.Parallelizer import Parallelizer
+from cagsgp.util.parallel.Parallelizer import Parallelizer
 
 T = TypeVar('T')
 
