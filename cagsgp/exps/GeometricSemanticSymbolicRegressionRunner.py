@@ -4,7 +4,6 @@ from functools import partial
 import itertools
 import time
 from typing import Any
-from weakref import WeakKeyDictionary
 
 from numpy.random import Generator
 from prettytable import PrettyTable
@@ -19,18 +18,13 @@ from cagsgp.nsgp.structure.factory.RowMajorCubeFactory import RowMajorCubeFactor
 from cagsgp.nsgp.structure.factory.RowMajorLineFactory import RowMajorLineFactory
 from cagsgp.nsgp.structure.factory.RowMajorMatrixFactory import RowMajorMatrixFactory
 from cagsgp.util.EvaluationMetrics import EvaluationMetrics
-from cagsgp.util.PicklePersist import PicklePersist
 from cagsgp.util.ResultUtils import ResultUtils
-from cagsgp.util.parallel.FakeParallelizer import FakeParallelizer
-from cagsgp.util.parallel.MultiProcessingParallelizer import MultiProcessingParallelizer
-from cagsgp.util.parallel.Parallelizer import Parallelizer
 from genepro.node import Node
 
 import numpy as np
 import random
 
-from genepro.node_impl import Constant, GSGPCrossover, GSGPMutation, Pointer, SemanticVector
-from genepro.storage import Cache
+from genepro.node_impl import Constant
 from genepro.util import get_subtree_as_full_list
 
 
@@ -52,7 +46,6 @@ class GeometricSemanticSymbolicRegressionRunner:
         dataset_name: str,
         dataset_path: str,
         seed: int = None,
-        multiprocess: bool = False,
         verbose: bool = False,
         gen_verbosity_level: int = 1,
         crossover_probability: float = 0.9,
@@ -74,22 +67,6 @@ class GeometricSemanticSymbolicRegressionRunner:
         y_test: np.ndarray = dataset['test'][1]
         dataset = None
 
-        if multiprocess:
-            parallelizer: Parallelizer = MultiProcessingParallelizer(-1)
-        else:
-            parallelizer: Parallelizer = FakeParallelizer()
-
-
-        # ===========================
-        # EVALUATOR AND CACHE
-        # ===========================
-
-        cache: Cache = Cache(WeakKeyDictionary())
-        cache.enable()
-
-        
-        #evaluators: list[TreeEvaluator] = [RMSE(X_train, y_train, cache=cache, store_in_cache=True, fix_properties=True)]
-
         # ===========================
         # ERC CREATION
         # ===========================
@@ -106,7 +83,7 @@ class GeometricSemanticSymbolicRegressionRunner:
             ephemeral_func: Callable = None
 
         if n_constants > 0:
-            constants: list[Constant] = [Constant(round(ephemeral_func(), 2), known_n_samples=None) for _ in range(n_constants)]
+            constants: list[Constant] = [Constant(round(ephemeral_func(), 2)) for _ in range(n_constants)]
 
         # ===========================
         # TREE STRUCTURE
@@ -150,7 +127,6 @@ class GeometricSemanticSymbolicRegressionRunner:
             m=m,
             verbose=verbose,
             gen_verbosity_level=gen_verbosity_level,
-            parallelizer=parallelizer,
             neighbors_topology_factory=neighbors_topology_factory,
             train_set=(X_train, y_train),
             test_set=(X_test, y_test)
@@ -165,7 +141,7 @@ class GeometricSemanticSymbolicRegressionRunner:
 
         pareto_front_df: dict[str, Any] = ResultUtils.parse_result_soo(
             result=res,
-            objective_names=['RMSE'], #[e.class_name() for e in evaluators],
+            objective_names=['RMSE'],
             seed=seed,
             pop_size=pop_size,
             num_gen=num_gen,
@@ -202,7 +178,6 @@ class GeometricSemanticSymbolicRegressionRunner:
         m: float,
         verbose: bool,
         gen_verbosity_level: int,
-        parallelizer: Parallelizer,
         neighbors_topology_factory: NeighborsTopologyFactory,
         train_set: tuple[np.ndarray, np.ndarray],
         test_set: tuple[np.ndarray, np.ndarray]
@@ -220,7 +195,6 @@ class GeometricSemanticSymbolicRegressionRunner:
         # ===========================
 
         # == RESULT, STATISTICS, EVALUATOR, FITNESS, TOPOLOGY COORDINATES ==
-        #rmse: TreeEvaluator = evaluators[0]
         all_possible_coordinates: list[tuple[int, ...]] = [elem for elem in itertools.product(*[list(range(s)) for s in pop_shape])]
         result: dict[str, Any] = {'best': {}, 'history': []}
         stats_collector: StatsCollectorSingle = StatsCollectorSingle(objective_name='RMSE', revert_sign=False)
@@ -238,7 +212,6 @@ class GeometricSemanticSymbolicRegressionRunner:
         # INITIALIZATION
         # ===========================
         
-        #previous_pop: list[tuple[Node, float]] = []
         pop: list[tuple[Node, float]] = [(structure.generate_tree(), None) for _ in range(pop_size)]
         
         # ===========================
@@ -252,7 +225,6 @@ class GeometricSemanticSymbolicRegressionRunner:
             # ===========================
             
             fit_values: list[float] = GeometricSemanticSymbolicRegressionRunner.__fitness_evaluation_and_update_statistics_and_result(
-                parallelizer=parallelizer,
                 pop=pop,
                 pop_size=pop_size,
                 stats_collector=stats_collector,
@@ -260,12 +232,9 @@ class GeometricSemanticSymbolicRegressionRunner:
                 verbose=verbose,
                 gen_verbosity_level=gen_verbosity_level,
                 result=result,
-                train_set=train_set
+                train_set=train_set,
+                test_set=test_set
             )
-
-            # == FREE SPACE IN CACHE ==
-            #for old_individual, _ in set(previous_pop).difference(set(pop)):
-            #    cache.remove(old_individual)
 
             # ===========================
             # SELECTION
@@ -291,43 +260,34 @@ class GeometricSemanticSymbolicRegressionRunner:
             # ===========================
             # CROSSOVER AND MUTATION
             # ===========================
-            cache: Cache = Cache(WeakKeyDictionary())
+
             offsprings: list[tuple[Node, float]] = []
             for i, both_trees in enumerate(parents, 0):
                 # == CROSSOVER ==
                 if random.random() < crossover_probability:
                     first_parent: tuple[Node, float] = both_trees[0]
                     second_parent: tuple[Node, float] = both_trees[1]
-                    cx_tree: Node = GSGPCrossover(cache=cache, fix_properties=True)
-                    cx_tree.insert_child(Pointer(first_parent[0], fix_properties=True))
-                    cx_tree.insert_child(Pointer(second_parent[0], fix_properties=True))
-                    cx_tree.insert_child(structure.generate_tree())
+                    cx_tree: Node = structure.geometric_semantic_single_tree_crossover(first_parent[0], second_parent[0], enable_caching=True, fix_properties=True)
                     new_tree: tuple[Node, float] = (cx_tree, None)
-                    #new_tree: tuple[Node, float] = (structure.geometric_semantic_single_tree_crossover(first_parent[0], second_parent[0], cache=None, store_in_cache=False, fix_properties=True), None)
                 else:
                     new_tree: tuple[Node, float] = pop[i]
 
                 # == MUTATION ==
                 if random.random() < mutation_probability:
-                    mut_tree: Node = GSGPMutation(m=m, fix_properties=True)
-                    mut_tree.insert_child(Pointer(new_tree[0], fix_properties=True))
-                    mut_tree.insert_child(structure.generate_tree())
-                    mut_tree.insert_child(structure.generate_tree())
+                    mut_tree: Node = structure.geometric_semantic_tree_mutation(new_tree[0], m=m, fix_properties=True)
                     new_tree = (mut_tree, None)
-                    #new_tree = (structure.geometric_semantic_tree_mutation(new_tree[0], m=m, cache=None, store_in_cache=False, fix_properties=True), None)
                 
                 offsprings.append(new_tree)
 
-            # == CHANGE POPULATION ==
+            # ===========================
+            # CHANGE POPULATION
+            # ===========================
 
-            #previous_pop = pop
             pop = offsprings
             parents = None
             offsprings = None
             new_tree = None
             
-            #print(cache.cache_size())
-            #print(cache.hit_ratio())
 
             # == NEXT GENERATION ==
 
@@ -338,7 +298,6 @@ class GeometricSemanticSymbolicRegressionRunner:
         # ===========================
 
         fit_values = GeometricSemanticSymbolicRegressionRunner.__fitness_evaluation_and_update_statistics_and_result(
-                parallelizer=parallelizer,
                 pop=pop,
                 pop_size=pop_size,
                 stats_collector=stats_collector,
@@ -346,11 +305,10 @@ class GeometricSemanticSymbolicRegressionRunner:
                 verbose=verbose,
                 gen_verbosity_level=gen_verbosity_level,
                 result=result,
-                train_set=train_set
+                train_set=train_set,
+                test_set=test_set
             )
         
-        #cache.empty_cache()
-        #cache.disable()
 
         result['statistics'] = stats_collector.build_dict()
 
@@ -367,7 +325,6 @@ class GeometricSemanticSymbolicRegressionRunner:
 
     @staticmethod
     def __fitness_evaluation_and_update_statistics_and_result(
-        parallelizer: Parallelizer,
         pop: list[tuple[Node, float]],
         pop_size: int,
         stats_collector: StatsCollectorSingle,
@@ -376,26 +333,16 @@ class GeometricSemanticSymbolicRegressionRunner:
         gen_verbosity_level: int,
         result: dict[str, Any],
         train_set: tuple[np.ndarray, np.ndarray],
+        test_set: tuple[np.ndarray, np.ndarray],
     ) -> list[float]:
         
         # ===========================
         # FITNESS EVALUATION
         # ===========================
 
-        #if parallelizer.class_name() == 'FakeParallelizer':
-        #fit_values: list[float] = [GeometricSemanticSymbolicRegressionRunner.__compute_single_fitness_value(pop=pop, idx=i, evaluator=rmse)
-        #                           for i in range(pop_size)]
-        
         fit_values: list[float] = [GeometricSemanticSymbolicRegressionRunner.__compute_single_RMSE_value_and_replace(pop=pop, idx=i, X=train_set[0], y=train_set[1])
                                    for i in range(pop_size)]
 
-        #else:
-        #    all_inds: list[dict[str, Node]] = [{'individual': pop[i]} for i in range(pop_size)]
-        #    pp: Callable = partial(single_evaluation_single_objective_no_fit_update, evaluator=rmse, fitness=fitness)
-        #    fit_values: list[float] = parallelizer.parallelize(pp, all_inds)
-        #    for i in range(len(fit_values)):
-        #        fitness.set(pop[i], fit_values[i])
-        
         # ===========================
         # UPDATE STATISTICS
         # ===========================
@@ -436,18 +383,6 @@ class GeometricSemanticSymbolicRegressionRunner:
         return fit_values
 
     @staticmethod
-    def __compute_single_fitness_value(pop: list[tuple[Node, float]], idx: int, evaluator: TreeEvaluator) -> float:
-        current_individual: tuple[Node, float] = pop[idx]
-        if current_individual[1] is not None:
-            # This individual has already been evaluated before, no need to recompute its fitness again
-            current_fitness: float = current_individual[1]
-        else:
-            # This individual has never been evaluated, need to compute its fitness
-            current_fitness: float = evaluator.evaluate(current_individual[0])
-            pop[idx] = (current_individual[0], current_fitness)
-        return current_fitness
-    
-    @staticmethod
     def __compute_single_RMSE_value_and_replace(pop: list[tuple[Node, float]], idx: int, X: np.ndarray, y: np.ndarray) -> float:
         current_individual: tuple[Node, float] = pop[idx]
         if current_individual[1] is not None:
@@ -457,17 +392,30 @@ class GeometricSemanticSymbolicRegressionRunner:
             # This individual has never been evaluated, need to compute its fitness
             current_tree: Node = current_individual[0]
             p: np.ndarray = np.core.umath.clip(current_tree(X), -1e+10, 1e+10)
-            #new_replaced_tree: Node = SemanticVector(p=p, fix_properties=True)
             current_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y, p=p, linear_scaling=True, slope=None, intercept=None)
             pop[idx] = (current_tree, current_fitness)
         return current_fitness
     
-        
-'''
-def single_evaluation_single_objective_no_fit_update(individual: Node, evaluator: TreeEvaluator, fitness: Cache) -> float:
-    r: float = fitness.get(individual)
-    if r is not None:
-        return r
-    f: float = evaluator.evaluate(individual)
-    return f
-'''
+    '''
+    @staticmethod
+    def __clean_pred_from_tree(tree: Node, curr_depth: int, target_depth: int, max_depth: int) -> None:
+        if curr_depth < target_depth:
+            for i in range(tree.arity):
+                GeometricSemanticSymbolicRegressionRunner.__clean_pred_from_tree(tree.get_child(i), curr_depth=curr_depth+1, target_depth=target_depth, max_depth=max_depth)
+            return
+        if target_depth <= curr_depth < max_depth:
+            if isinstance(tree, GSGPCrossover):
+                tree.clean_pred()
+                first: Node = tree.get_child(0)
+                second: Node = tree.get_child(1)
+                GeometricSemanticSymbolicRegressionRunner.__clean_pred_from_tree(first, curr_depth=curr_depth+1, target_depth=target_depth, max_depth=max_depth)
+                GeometricSemanticSymbolicRegressionRunner.__clean_pred_from_tree(second, curr_depth=curr_depth+1, target_depth=target_depth, max_depth=max_depth)
+                return
+            for i in range(tree.arity):
+                GeometricSemanticSymbolicRegressionRunner.__clean_pred_from_tree(tree.get_child(i), curr_depth=curr_depth+1, target_depth=target_depth, max_depth=max_depth)
+            return
+        if curr_depth == max_depth:
+            if isinstance(tree, GSGPCrossover):
+                tree.clean_pred()
+        return
+    '''

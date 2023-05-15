@@ -6,7 +6,6 @@ from genepro.variation import generate_tree_wrt_strategy, safe_subtree_mutation,
 
 from genepro.node_impl import *
 from genepro.node import Node
-from genepro.storage import Cache
 
 from genepro.util import compute_linear_model_discovered_in_math_formula_interpretability_paper, \
     concatenate_nodes_with_binary_operator, get_subtree_as_full_list, tree_from_prefix_repr
@@ -181,34 +180,20 @@ class TreeStructure:
     def safe_subtree_crossover_two_children(self, tree_1: Node, tree_2: Node) -> tuple[Node, Node]:
         return safe_subtree_crossover_two_children(tree_1, tree_2, max_depth=self.__max_depth)
 
-    def geometric_semantic_single_tree_crossover(self, tree_1: Node, tree_2: Node, cache: Cache = None, store_in_cache: bool = False, fix_properties: bool = False) -> Node:
-        return geometric_semantic_single_tree_crossover(tree1=tree_1,
-                                                        tree2=tree_2,
-                                                        internal_nodes=self.__operators,
-                                                        leaf_nodes=self.__terminals,
-                                                        max_depth=self.__max_depth,
-                                                        ephemeral_func=self.__ephemeral_func,
-                                                        p=self.__p,
-                                                        cache=cache,
-                                                        store_in_cache=store_in_cache,
-                                                        fix_properties=fix_properties,
-                                                        generation_strategy=self.__generation_strategy,
-                                                        fixed_constants=self.__fixed_constants)
+    def geometric_semantic_single_tree_crossover(self, tree_1: Node, tree_2: Node, enable_caching: bool = False, fix_properties: bool = False) -> Node:
+        cx_tree: Node = GSGPCrossover(enable_caching=enable_caching, fix_properties=fix_properties)
+        cx_tree.insert_child(Pointer(tree_1, fix_properties=fix_properties))
+        cx_tree.insert_child(Pointer(tree_2, fix_properties=fix_properties))
+        cx_tree.insert_child(self.generate_tree())
+        return cx_tree
 
-    def geometric_semantic_tree_mutation(self, tree: Node, m: float, cache: Cache = None, store_in_cache: bool = False, fix_properties: bool = False) -> Node:
-        return geometric_semantic_tree_mutation(tree=tree,
-                                                internal_nodes=self.__operators,
-                                                leaf_nodes=self.__terminals,
-                                                max_depth=self.__max_depth,
-                                                ephemeral_func=self.__ephemeral_func,
-                                                p=self.__p,
-                                                m=m,
-                                                cache=cache,
-                                                store_in_cache=store_in_cache,
-                                                fix_properties=fix_properties,
-                                                generation_strategy=self.__generation_strategy,
-                                                fixed_constants=self.__fixed_constants)
-
+    def geometric_semantic_tree_mutation(self, tree: Node, m: float, fix_properties: bool = False) -> Node:
+        mut_tree: Node = GSGPMutation(m=m, fix_properties=fix_properties)
+        mut_tree.insert_child(Pointer(tree, fix_properties=fix_properties))
+        mut_tree.insert_child(self.generate_tree())
+        mut_tree.insert_child(self.generate_tree())
+        return mut_tree
+        
     def get_dict_representation(self, tree: Node) -> dict[int, str]:
         return tree.get_dict_repr(self.get_max_arity())
 
