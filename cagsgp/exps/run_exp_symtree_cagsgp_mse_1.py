@@ -49,11 +49,11 @@ if __name__ == '__main__':
 
     for neighbors_topology in ['matrix']:
         for radius in [1]:
-            for dataset_name in ['yacht']:    
-                for seed in [1]:
+            for dataset_name in ['slump']:    
+                for seed in [2]:
                     pr = cProfile.Profile()
                     #pr.enable()
-                    dataset_path = codebase_folder + 'python_data/CA-GSGP/' + 'datasets_csv/' + dataset_name + '/' + 'train' + str(seed) + '.csv'
+                    dataset_path = codebase_folder + 'python_data/CA-GSGP/' + 'datasets_csv/' + dataset_name + '/'
                     t: tuple[dict[str, Any], str] = GeometricSemanticSymbolicRegressionRunner.run_symbolic_regression_with_cellular_automata_gsgp(
                         pop_size=pop_size,
                         pop_shape=pop_shape,

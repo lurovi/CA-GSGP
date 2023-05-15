@@ -16,6 +16,7 @@ from cagsgp.nsgp.structure.NeighborsTopology import NeighborsTopology
 from cagsgp.nsgp.structure.TreeStructure import TreeStructure
 from cagsgp.nsgp.structure.factory.NeighborsTopologyFactory import NeighborsTopologyFactory
 from cagsgp.nsgp.structure.factory.RowMajorCubeFactory import RowMajorCubeFactory
+from cagsgp.nsgp.structure.factory.RowMajorLineFactory import RowMajorLineFactory
 from cagsgp.nsgp.structure.factory.RowMajorMatrixFactory import RowMajorMatrixFactory
 from cagsgp.util.EvaluationMetrics import EvaluationMetrics
 from cagsgp.util.PicklePersist import PicklePersist
@@ -49,7 +50,7 @@ class GeometricSemanticSymbolicRegressionRunner:
         high_erc: float,
         n_constants: int,
         dataset_name: str,
-        dataset_path: str = None,
+        dataset_path: str,
         seed: int = None,
         multiprocess: bool = False,
         verbose: bool = False,
@@ -66,17 +67,12 @@ class GeometricSemanticSymbolicRegressionRunner:
         # LOADING DATASET
         # ===========================
         
-        if dataset_path is not None:        
-            #dataset: dict[str, tuple[np.ndarray, np.ndarray]] = PicklePersist.decompress_pickle(dataset_path)
-            dataset: tuple[np.ndarray, np.ndarray] = DatasetGenerator.read_csv_data(path=dataset_path)
-            X_train: np.ndarray = dataset[0]
-            y_train: np.ndarray = dataset[1]
-            dataset = None
-        else:
-            dataset: dict[str, tuple[np.ndarray, np.ndarray]] = DatasetGenerator.generate_dataset(dataset_name=dataset_name, seed=seed, reset=False, path=None)
-            X_train: np.ndarray = dataset['training'][0]
-            y_train: np.ndarray = dataset['training'][1]
-            dataset = None
+        dataset: dict[str, tuple[np.ndarray, np.ndarray]] = DatasetGenerator.read_csv_data(path=dataset_path, idx=seed)
+        X_train: np.ndarray = dataset['train'][0]
+        y_train: np.ndarray = dataset['train'][1]
+        X_test: np.ndarray = dataset['test'][0]
+        y_test: np.ndarray = dataset['test'][1]
+        dataset = None
 
         if multiprocess:
             parallelizer: Parallelizer = MultiProcessingParallelizer(-1)
@@ -110,7 +106,7 @@ class GeometricSemanticSymbolicRegressionRunner:
             ephemeral_func: Callable = None
 
         if n_constants > 0:
-            constants: list[Constant] = [Constant(round(ephemeral_func(), 2), known_n_samples=X_train.shape[0]) for _ in range(n_constants)]
+            constants: list[Constant] = [Constant(round(ephemeral_func(), 2), known_n_samples=None) for _ in range(n_constants)]
 
         # ===========================
         # TREE STRUCTURE
@@ -132,6 +128,8 @@ class GeometricSemanticSymbolicRegressionRunner:
             neighbors_topology_factory: NeighborsTopologyFactory = RowMajorMatrixFactory(n_rows=pop_shape[0], n_cols=pop_shape[1], radius=radius)
         elif neighbors_topology == 'cube':
             neighbors_topology_factory: NeighborsTopologyFactory = RowMajorCubeFactory(n_channels=pop_shape[0], n_rows=pop_shape[1], n_cols=pop_shape[2], radius=radius)
+        elif neighbors_topology == 'line':
+            neighbors_topology_factory: NeighborsTopologyFactory = RowMajorLineFactory(radius=radius)
         else:
             raise ValueError(f'{neighbors_topology} is not a valid neighbors topology.')
 
@@ -154,7 +152,8 @@ class GeometricSemanticSymbolicRegressionRunner:
             gen_verbosity_level=gen_verbosity_level,
             parallelizer=parallelizer,
             neighbors_topology_factory=neighbors_topology_factory,
-            train_set=(X_train, y_train)
+            train_set=(X_train, y_train),
+            test_set=(X_test, y_test)
         )
 
         end_time: float = time.time()
@@ -205,7 +204,8 @@ class GeometricSemanticSymbolicRegressionRunner:
         gen_verbosity_level: int,
         parallelizer: Parallelizer,
         neighbors_topology_factory: NeighborsTopologyFactory,
-        train_set: tuple[np.ndarray, np.ndarray]
+        train_set: tuple[np.ndarray, np.ndarray],
+        test_set: tuple[np.ndarray, np.ndarray]
     ) -> dict[str, Any]:
         
         # ===========================
@@ -448,7 +448,7 @@ class GeometricSemanticSymbolicRegressionRunner:
             current_tree: Node = current_individual[0]
             p: np.ndarray = np.core.umath.clip(current_tree(X), -1e+10, 1e+10)
             new_replaced_tree: Node = SemanticVector(p=p, fix_properties=True)
-            current_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y, p=p, linear_scaling=True, slope=None, intercept=None)
+            current_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y, p=p, linear_scaling=False, slope=None, intercept=None)
             pop[idx] = (new_replaced_tree, current_fitness)
         return current_fitness
     
