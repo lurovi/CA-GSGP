@@ -31,4 +31,4 @@ class MSE(TreeEvaluator):
 
     def evaluate(self, tree: Node) -> float:
         p: np.ndarray = np.core.umath.clip(Pointer(tree, cache=self.__cache, store_in_cache=self.__store_in_cache, fix_properties=self.__fix_properties)(self.__X), -1e+10, 1e+10)
-        return EvaluationMetrics.mean_squared_error(y=self.__y, p=p, linear_scaling=False, slope=None, intercept=None)
+        return EvaluationMetrics.mean_squared_error(y=self.__y, p=p, linear_scaling=True, slope=None, intercept=None)

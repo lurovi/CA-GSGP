@@ -17,7 +17,7 @@ if __name__ == '__main__':
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
 
     pop_size: int = 100
-    num_gen: int = 100
+    num_gen: int = 20
     m: float = 2.0
     max_depth: int = 6
     generation_strategy: str = 'half'
@@ -49,8 +49,8 @@ if __name__ == '__main__':
 
     for neighbors_topology in ['matrix']:
         for radius in [1]:
-            for dataset_name in ['slump']:    
-                for seed in [2]:
+            for dataset_name in ['airfoil']:    
+                for seed in [1]:
                     pr = cProfile.Profile()
                     #pr.enable()
                     dataset_path = codebase_folder + 'python_data/CA-GSGP/' + 'datasets_csv/' + dataset_name + '/'
@@ -69,7 +69,7 @@ if __name__ == '__main__':
                         seed=seed,
                         multiprocess=False,
                         verbose=True,
-                        gen_verbosity_level=50,
+                        gen_verbosity_level=1,
                         crossover_probability=crossover_probability,
                         mutation_probability=mutation_probability,
                         m=m,

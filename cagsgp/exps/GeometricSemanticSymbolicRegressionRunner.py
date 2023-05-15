@@ -29,7 +29,7 @@ from genepro.node import Node
 import numpy as np
 import random
 
-from genepro.node_impl import Constant, SemanticVector
+from genepro.node_impl import Constant, GSGPCrossover, GSGPMutation, Pointer, SemanticVector
 from genepro.storage import Cache
 from genepro.util import get_subtree_as_full_list
 
@@ -84,8 +84,8 @@ class GeometricSemanticSymbolicRegressionRunner:
         # EVALUATOR AND CACHE
         # ===========================
 
-        #cache: Cache = Cache(WeakKeyDictionary())
-        #cache.enable()
+        cache: Cache = Cache(WeakKeyDictionary())
+        cache.enable()
 
         
         #evaluators: list[TreeEvaluator] = [RMSE(X_train, y_train, cache=cache, store_in_cache=True, fix_properties=True)]
@@ -250,7 +250,7 @@ class GeometricSemanticSymbolicRegressionRunner:
             # ===========================
             # FITNESS EVALUATION AND UPDATE
             # ===========================
-
+            
             fit_values: list[float] = GeometricSemanticSymbolicRegressionRunner.__fitness_evaluation_and_update_statistics_and_result(
                 parallelizer=parallelizer,
                 pop=pop,
@@ -291,20 +291,30 @@ class GeometricSemanticSymbolicRegressionRunner:
             # ===========================
             # CROSSOVER AND MUTATION
             # ===========================
-
+            cache: Cache = Cache(WeakKeyDictionary())
             offsprings: list[tuple[Node, float]] = []
             for i, both_trees in enumerate(parents, 0):
                 # == CROSSOVER ==
                 if random.random() < crossover_probability:
                     first_parent: tuple[Node, float] = both_trees[0]
                     second_parent: tuple[Node, float] = both_trees[1]
-                    new_tree: tuple[Node, float] = (structure.geometric_semantic_single_tree_crossover(first_parent[0], second_parent[0], cache=None, store_in_cache=False, fix_properties=True), None)
+                    cx_tree: Node = GSGPCrossover(cache=cache, fix_properties=True)
+                    cx_tree.insert_child(Pointer(first_parent[0], fix_properties=True))
+                    cx_tree.insert_child(Pointer(second_parent[0], fix_properties=True))
+                    cx_tree.insert_child(structure.generate_tree())
+                    new_tree: tuple[Node, float] = (cx_tree, None)
+                    #new_tree: tuple[Node, float] = (structure.geometric_semantic_single_tree_crossover(first_parent[0], second_parent[0], cache=None, store_in_cache=False, fix_properties=True), None)
                 else:
                     new_tree: tuple[Node, float] = pop[i]
 
                 # == MUTATION ==
                 if random.random() < mutation_probability:
-                    new_tree = (structure.geometric_semantic_tree_mutation(new_tree[0], m=m, cache=None, store_in_cache=False, fix_properties=True), None)
+                    mut_tree: Node = GSGPMutation(m=m, fix_properties=True)
+                    mut_tree.insert_child(Pointer(new_tree[0], fix_properties=True))
+                    mut_tree.insert_child(structure.generate_tree())
+                    mut_tree.insert_child(structure.generate_tree())
+                    new_tree = (mut_tree, None)
+                    #new_tree = (structure.geometric_semantic_tree_mutation(new_tree[0], m=m, cache=None, store_in_cache=False, fix_properties=True), None)
                 
                 offsprings.append(new_tree)
 
@@ -447,9 +457,9 @@ class GeometricSemanticSymbolicRegressionRunner:
             # This individual has never been evaluated, need to compute its fitness
             current_tree: Node = current_individual[0]
             p: np.ndarray = np.core.umath.clip(current_tree(X), -1e+10, 1e+10)
-            new_replaced_tree: Node = SemanticVector(p=p, fix_properties=True)
-            current_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y, p=p, linear_scaling=False, slope=None, intercept=None)
-            pop[idx] = (new_replaced_tree, current_fitness)
+            #new_replaced_tree: Node = SemanticVector(p=p, fix_properties=True)
+            current_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y, p=p, linear_scaling=True, slope=None, intercept=None)
+            pop[idx] = (current_tree, current_fitness)
         return current_fitness
     
         
