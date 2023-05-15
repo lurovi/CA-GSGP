@@ -41,9 +41,13 @@ class TreeStructure:
         self.__operators: list[Node] = deepcopy(operators)
         self.__n_operators: int = len(operators)
         if self.__p is None:
-            self.__p = [1.0/float(self.__n_operators)] * self.__n_operators
-        if self.__n_operators != len(self.__p):
+            self.__p = []
+        if self.__p != [] and self.__n_operators != len(self.__p):
             raise AttributeError(f"The length of probability distribution for internal nodes p is {len(self.__p)} but the number of operators is {self.__n_operators}. These two numbers must be equal.")
+        if self.__p != [] and sum(self.__p) != 1.0:
+            raise AttributeError(f"The p parameter must be a probability distribution, the sum {sum(self.__p)} is not 1.")
+        if self.__p != [] and any([ppp < 0 for ppp in self.__p]):
+            raise AttributeError(f"The p parameter must be a probability distribution, however, here we have negative numbers.")
         self.__n_features: int = n_features
         self.__features: list[Feature] = [Feature(i) for i in range(n_features)]
         self.__max_depth: int = max_depth

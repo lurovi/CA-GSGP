@@ -109,8 +109,18 @@ class RowMajorMatrix(NeighborsTopology):
                     if include_current_point:
                         result.append(self.get((ii,jj),clone=clone))
                 else:
-                    if 0 <= ii < self.n_rows() and 0 <= jj < self.n_cols():
-                        result.append(self.get((ii,jj),clone=clone))
+                    if 0 <= ii < self.n_rows():
+                        new_ii: int = ii
+                    else:
+                        new_ii: int = ii + (-self.__sign(ii) * self.n_rows())
+                    
+                    if 0 <= jj < self.n_cols():
+                        new_jj: int = jj
+                    else:
+                        new_jj: int = jj + (-self.__sign(jj) * self.n_cols())
+                    
+                    result.append(self.get((new_ii,new_jj),clone=clone))
+
         return result
 
     def get_matrix_as_string(self) -> str:
@@ -132,3 +142,6 @@ class RowMajorMatrix(NeighborsTopology):
     def __check_col_index(self, j: int) -> None:
         if not 0 <= j < self.n_cols():
             raise IndexError(f'Index {j} is out of range with declared number of cols ({self.n_cols()})')
+        
+    def __sign(self, i: int) -> int:
+        return -1 if i < 0 else 1
