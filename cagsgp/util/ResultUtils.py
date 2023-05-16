@@ -170,17 +170,18 @@ class ResultUtils:
         execution_time_in_minutes: float,
         neighbors_topology: str,
         radius: int,
+        elitism: bool,
         dataset_name: str,
         duplicates_elimination: str
     ) -> dict[str, Any]:
         n_objectives: int = len(objective_names)
 
         pareto_front_dict: dict[str, Any] = {"parameters": {},
-                                             "optimal": result['best'],
+                                             "best": result['best'],
                                              "history": result['history'],
-                                             "n_evals": [],
-                                             "biodiversity": {},
-                                             "statistics": result['statistics']
+                                             "pop_fitness_per_gen": result['pop_fitness_per_gen'],
+                                             "train_statistics": result['train_statistics'],
+                                             "test_statistics": result['test_statistics']
                                              }
         
         pareto_front_dict["parameters"]["PopSize"] = pop_size
@@ -195,6 +196,7 @@ class ResultUtils:
         pareto_front_dict["parameters"]["ExecutionTimeInMinutes"] = execution_time_in_minutes
         pareto_front_dict["parameters"]["NeighborsTopology"] = neighbors_topology
         pareto_front_dict["parameters"]["Radius"] = radius
+        pareto_front_dict["parameters"]["Elitism"] = int(elitism)
         pareto_front_dict["parameters"]["Dataset"] = dataset_name
         pareto_front_dict["parameters"]["DuplicatesElimination"] = duplicates_elimination
         pareto_front_dict["parameters"]["Seed"] = seed

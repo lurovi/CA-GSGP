@@ -12,7 +12,8 @@ class RMSE(TreeEvaluator):
                  y: np.ndarray = None,
                  cache: Cache = None,
                  store_in_cache: bool = False,
-                 fix_properties: bool = False
+                 fix_properties: bool = False,
+                 linear_scaling: bool = False
                  ) -> None:
         super().__init__()
         if y is None:
@@ -28,7 +29,8 @@ class RMSE(TreeEvaluator):
         self.__cache: Cache = cache
         self.__store_in_cache: bool = store_in_cache
         self.__fix_properties: bool = fix_properties
+        self.__linear_scaling: bool = linear_scaling
 
     def evaluate(self, tree: Node) -> float:
         p: np.ndarray = np.core.umath.clip(Pointer(tree, cache=self.__cache, store_in_cache=self.__store_in_cache, fix_properties=self.__fix_properties)(self.__X), -1e+10, 1e+10)
-        return EvaluationMetrics.root_mean_squared_error(y=self.__y, p=p, linear_scaling=True, slope=None, intercept=None)
+        return EvaluationMetrics.root_mean_squared_error(y=self.__y, p=p, linear_scaling=self.__linear_scaling, slope=None, intercept=None)

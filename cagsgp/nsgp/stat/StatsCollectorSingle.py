@@ -29,7 +29,8 @@ class StatsCollectorSingle:
                                "min": min_da,
                                "max": max_da,
                                "sum": sum_da,
-                               "std": std_da}
+                               "std": std_da,
+                               "count": da.shape[0]}
         self.__data[n_gen] = d
 
     def get_fitness_stat(self, n_gen: int, stat: str) -> float:
@@ -40,7 +41,7 @@ class StatsCollectorSingle:
                                    "Objective": [],
                                    "Statistic": [],
                                    "Value": []}
-        for n_gen in self.__data:
+        for n_gen in sorted(list(self.__data.keys())):
             dd: dict[str, float] = self.__data[n_gen]
             for stat in dd:
                 val: float = dd[stat]
@@ -51,3 +52,10 @@ class StatsCollectorSingle:
                 d["Statistic"].append(stat)
                 d["Value"].append(value)
         return d
+    
+    def build_list(self) -> list[dict[str, dict[str, float]]]:
+        l: list[dict[str, dict[str, float]]] = []
+        for n_gen in sorted(list(self.__data.keys())):
+            d: dict[str, dict[str, float]] = {self.__objective_name: self.__data[n_gen]}
+            l.append(d)
+        return l
