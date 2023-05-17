@@ -8,8 +8,7 @@ from typing import Any
 from numpy.random import Generator
 from prettytable import PrettyTable
 from cagsgp.benchmark.DatasetGenerator import DatasetGenerator
-from cagsgp.nsgp.evaluator.RMSE import RMSE
-from cagsgp.nsgp.evaluator.TreeEvaluator import TreeEvaluator
+
 from cagsgp.nsgp.stat.StatsCollectorSingle import StatsCollectorSingle
 from cagsgp.nsgp.structure.NeighborsTopology import NeighborsTopology
 from cagsgp.nsgp.structure.TreeStructure import TreeStructure

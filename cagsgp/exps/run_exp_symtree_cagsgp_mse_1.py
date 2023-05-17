@@ -38,8 +38,11 @@ def run_single_experiment(
         elitism: bool
 ) -> None:
     
+    end_seed: int = 100
+    gen_verbosity_level: int = num_gen
+
     dataset_path = dataset_path_folder + dataset_name + '/'
-    for seed in range(1, 1 + 1):
+    for seed in range(1, end_seed + 1):
         t: tuple[dict[str, Any], str] = run_symbolic_regression_with_cellular_automata_gsgp(
             pop_size=pop_size,
             pop_shape=pop_shape,
@@ -54,7 +57,7 @@ def run_single_experiment(
             dataset_path=dataset_path,
             seed=seed,
             verbose=True,
-            gen_verbosity_level=1,
+            gen_verbosity_level=gen_verbosity_level,
             crossover_probability=crossover_probability,
             mutation_probability=mutation_probability,
             m=m,
@@ -89,8 +92,8 @@ def run_experiment_all_datasets(
         duplicates_elimination: str,
         elitism: bool
 ) -> None:
-    parallelizer: Parallelizer = FakeParallelizer()
-    #parallelizer: Parallelizer = MultiProcessingParallelizer(len(dataset_names))
+    #parallelizer: Parallelizer = FakeParallelizer()
+    parallelizer: Parallelizer = MultiProcessingParallelizer(len(dataset_names))
     parallel_func: Callable = partial(run_single_experiment,
                                         folder_name=folder_name,
                                         dataset_path_folder=dataset_path_folder,
@@ -116,6 +119,7 @@ def run_experiment_all_datasets(
 
 if __name__ == '__main__':
     # Datasets: ['airfoil', 'bioav', 'concrete', 'parkinson', 'ppb', 'slump', 'toxicity', 'vladislavleva-14', 'yacht']
+    # Datasets: ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
     #folder_name: str = '/mnt/data/lrovito/' + 'CA-GSGP/' + 'results_1' + '/'
@@ -123,7 +127,7 @@ if __name__ == '__main__':
     #dataset_path_folder: str = '/mnt/data/lrovito/' + 'CA-GSGP/datasets_csv/'
 
     pop_size: int = 100
-    num_gen: int = 10
+    num_gen: int = 100
     m: float = 0.0
     max_depth: int = 6
     elitism: bool = True
@@ -141,19 +145,19 @@ if __name__ == '__main__':
         {'neighbors_topology': 'tournament',
          'radius': 9,
          'pop_shape': (100,),
-         'dataset_names': ['airfoil']},
-        {'neighbors_topology': 'tournament',
-         'radius': 3,
-         'pop_shape': (100,),
-         'dataset_names': ['airfoil']},
+         'dataset_names': ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']},
         {'neighbors_topology': 'matrix',
          'radius': 1,
          'pop_shape': (10,10),
-         'dataset_names': ['airfoil']},
-        {'neighbors_topology': 'line',
-         'radius': 1,
-         'pop_shape': (100,),
-         'dataset_names': ['airfoil']},
+         'dataset_names': ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']}
+        #{'neighbors_topology': 'tournament',
+        # 'radius': 3,
+        # 'pop_shape': (100,),
+        # 'dataset_names': ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']},
+        #{'neighbors_topology': 'line',
+        # 'radius': 1,
+        # 'pop_shape': (100,),
+        # 'dataset_names': ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']},
     ]
 
     start_time: float = time.time()
