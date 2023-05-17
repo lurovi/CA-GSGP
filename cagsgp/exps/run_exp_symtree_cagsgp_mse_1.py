@@ -123,7 +123,7 @@ if __name__ == '__main__':
     #dataset_path_folder: str = '/mnt/data/lrovito/' + 'CA-GSGP/datasets_csv/'
 
     pop_size: int = 100
-    num_gen: int = 10
+    num_gen: int = 15
     m: float = 0.0
     max_depth: int = 6
     elitism: bool = True
