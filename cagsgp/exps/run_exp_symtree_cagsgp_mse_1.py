@@ -116,7 +116,6 @@ def run_experiment_all_datasets(
 
 if __name__ == '__main__':
     # Datasets: ['airfoil', 'bioav', 'concrete', 'parkinson', 'ppb', 'slump', 'toxicity', 'vladislavleva-14', 'yacht']
-    dataset_names: list[str] = ['airfoil']
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
     #folder_name: str = '/mnt/data/lrovito/' + 'CA-GSGP/' + 'results_1' + '/'
@@ -124,8 +123,7 @@ if __name__ == '__main__':
     #dataset_path_folder: str = '/mnt/data/lrovito/' + 'CA-GSGP/datasets_csv/'
 
     pop_size: int = 100
-    pop_shape: tuple[int, ...] = (100,)
-    num_gen: int = 100
+    num_gen: int = 10
     m: float = 0.0
     max_depth: int = 6
     elitism: bool = True
@@ -139,32 +137,51 @@ if __name__ == '__main__':
     high_erc: float = 100.0 + 1e-8
     n_constants: int = 100
 
+    parameters: list[dict[str, Any]] = [
+        {'neighbors_topology': 'tournament',
+         'radius': 9,
+         'pop_shape': (100,),
+         'dataset_names': ['airfoil']},
+        {'neighbors_topology': 'tournament',
+         'radius': 3,
+         'pop_shape': (100,),
+         'dataset_names': ['airfoil']},
+        {'neighbors_topology': 'matrix',
+         'radius': 1,
+         'pop_shape': (10,10),
+         'dataset_names': ['airfoil']},
+        {'neighbors_topology': 'line',
+         'radius': 1,
+         'pop_shape': (100,),
+         'dataset_names': ['airfoil']},
+    ]
+
     start_time: float = time.time()
 
-    for neighbors_topology in ['tournament']:
-        for radius in [4]:    
-            run_experiment_all_datasets(
-                folder_name=folder_name,
-                dataset_names=dataset_names,
-                dataset_path_folder=dataset_path_folder,
-                neighbors_topology=neighbors_topology,
-                radius=radius,
-                pop_size=pop_size,
-                pop_shape=pop_shape,
-                num_gen=num_gen,
-                max_depth=max_depth,
-                generation_strategy=generation_strategy,
-                operators=operators,
-                low_erc=low_erc,
-                high_erc=high_erc,
-                n_constants=n_constants,
-                crossover_probability=crossover_probability,
-                mutation_probability=mutation_probability,
-                m=m,
-                duplicates_elimination=duplicates_elimination,
-                elitism=elitism
-            )
+    for parameter in parameters:  
+        run_experiment_all_datasets(
+            folder_name=folder_name,
+            dataset_names=parameter['dataset_names'],
+            dataset_path_folder=dataset_path_folder,
+            neighbors_topology=parameter['neighbors_topology'],
+            radius=parameter['radius'],
+            pop_size=pop_size,
+            pop_shape=parameter['pop_shape'],
+            num_gen=num_gen,
+            max_depth=max_depth,
+            generation_strategy=generation_strategy,
+            operators=operators,
+            low_erc=low_erc,
+            high_erc=high_erc,
+            n_constants=n_constants,
+            crossover_probability=crossover_probability,
+            mutation_probability=mutation_probability,
+            m=m,
+            duplicates_elimination=duplicates_elimination,
+            elitism=elitism
+        )
 
     end_time: float = time.time()
+
     execution_time_in_minutes: float = (end_time - start_time) * (1 / 60)
     print("TOTAL TIME (minutes): " + str(execution_time_in_minutes))

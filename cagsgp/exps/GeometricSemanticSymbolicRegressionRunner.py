@@ -100,6 +100,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
     # NEIGHBORS TOPOLOGY FACTORY
     # ===========================
 
+    is_tournament_selection: bool = False
     pressure: int = (2 * radius + 1) ** len(pop_shape)
     if neighbors_topology == 'matrix':
         neighbors_topology_factory: NeighborsTopologyFactory = RowMajorMatrixFactory(n_rows=pop_shape[0], n_cols=pop_shape[1], radius=radius)
@@ -110,6 +111,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
     elif neighbors_topology == 'tournament':
         pressure = radius
         radius = 0
+        is_tournament_selection = True
         neighbors_topology_factory: NeighborsTopologyFactory = TournamentTopologyFactory(pressure=pressure)
     else:
         raise ValueError(f'{neighbors_topology} is not a valid neighbors topology.')
@@ -133,6 +135,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
         gen_verbosity_level=gen_verbosity_level,
         neighbors_topology_factory=neighbors_topology_factory,
         elitism=elitism,
+        is_tournament_selection=is_tournament_selection,
         train_set=(X_train, y_train),
         test_set=(X_test, y_test)
     )
@@ -186,6 +189,7 @@ def __ca_inspired_gsgp(
     gen_verbosity_level: int,
     neighbors_topology_factory: NeighborsTopologyFactory,
     elitism: bool,
+    is_tournament_selection: bool,
     train_set: tuple[np.ndarray, np.ndarray],
     test_set: tuple[np.ndarray, np.ndarray]
 ) -> dict[str, Any]:
@@ -207,7 +211,7 @@ def __ca_inspired_gsgp(
                                                         'test': StatsCollectorSingle(objective_name='RMSE', revert_sign=False)}
     
     # == ALL POSSIBLE NEIGHBORHOODS ==
-    if len(pop_shape) > 1 and neighbors_topology_factory.class_name() != 'TournamentTopologyFactory':
+    if len(pop_shape) > 1 and not is_tournament_selection:
         all_possible_coordinates: list[tuple[int, ...]] = [elem for elem in itertools.product(*[list(range(s)) for s in pop_shape])]
     else:
         all_possible_coordinates: list[tuple[int, ...]] = [(i,) for i in range(pop_size)]
@@ -215,7 +219,7 @@ def __ca_inspired_gsgp(
     neigh_top_indices: NeighborsTopology = neighbors_topology_factory.create(all_possible_coordinates, clone=False)
     all_neighborhoods_indices: dict[tuple[int, ...], list[tuple[int, ...]]] = {}
     
-    if neighbors_topology_factory.class_name() != 'TournamentTopologyFactory':
+    if not is_tournament_selection:
         for coordinate in all_possible_coordinates:
             curr_neighs: list[tuple[int, ...]] = neigh_top_indices.neighborhood(coordinate, include_current_point=True, clone=False)
             all_neighborhoods_indices[coordinate] = curr_neighs
@@ -261,13 +265,19 @@ def __ca_inspired_gsgp(
         neighbors_topology: NeighborsTopology = neighbors_topology_factory.create(evaluated_individuals, clone=False)
 
         for coordinate in all_possible_coordinates:
-            if neighbors_topology_factory.class_name() != 'TournamentTopologyFactory':
+            if not is_tournament_selection:
                 competitors: list[tuple[int, Node, float]] = [neighbors_topology.get(idx_tuple, clone=False) for idx_tuple in all_neighborhoods_indices[coordinate]]
+                competitors.sort(key=lambda x: x[2], reverse=False)
+                first: tuple[int, Node, float] = competitors[0]
+                second: tuple[int, Node, float] = competitors[1]
             else:
                 competitors: list[tuple[int, Node, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False)
-            competitors.sort(key=lambda x: x[2], reverse=False)
-            first: tuple[int, Node, float] = competitors[0]
-            second: tuple[int, Node, float] = competitors[1]
+                competitors.sort(key=lambda x: x[2], reverse=False)
+                first: tuple[int, Node, float] = competitors[0]
+                competitors = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False)
+                competitors.sort(key=lambda x: x[2], reverse=False)
+                second: tuple[int, Node, float] = competitors[0]
+            
             parents.append(((first[1], first[2]), (second[1], second[2])))
 
         evaluated_individuals = None
