@@ -73,12 +73,9 @@ def run_single_experiment(
 
 def run_experiment_all_datasets(
         folder_name: str,
-        dataset_names: list[str],
+        parameters: list[dict[str, Any]],
         dataset_path_folder: str,
-        neighbors_topology: str,
-        radius: int,
         pop_size: int,
-        pop_shape: int,
         num_gen: int,
         max_depth: int,
         generation_strategy: str,
@@ -92,15 +89,12 @@ def run_experiment_all_datasets(
         duplicates_elimination: str,
         elitism: bool
 ) -> None:
-    parallelizer: Parallelizer = FakeParallelizer()
-    #parallelizer: Parallelizer = MultiProcessingParallelizer(len(dataset_names))
+    #parallelizer: Parallelizer = FakeParallelizer()
+    parallelizer: Parallelizer = MultiProcessingParallelizer(len(parameters))
     parallel_func: Callable = partial(run_single_experiment,
                                         folder_name=folder_name,
                                         dataset_path_folder=dataset_path_folder,
-                                        neighbors_topology=neighbors_topology,
-                                        radius=radius,
                                         pop_size=pop_size,
-                                        pop_shape=pop_shape,
                                         num_gen=num_gen,
                                         max_depth=max_depth,
                                         generation_strategy=generation_strategy,
@@ -114,7 +108,7 @@ def run_experiment_all_datasets(
                                         duplicates_elimination=duplicates_elimination,
                                         elitism=elitism
                                     )
-    _ = parallelizer.parallelize(parallel_func, [{'dataset_name': dataset_name} for dataset_name in dataset_names])
+    _ = parallelizer.parallelize(parallel_func, parameters=parameters)
 
 
 if __name__ == '__main__':
@@ -141,50 +135,50 @@ if __name__ == '__main__':
     high_erc: float = 100.0 + 1e-8
     n_constants: int = 100
 
-    parameters: list[dict[str, Any]] = [
-        #{'neighbors_topology': 'tournament',
-        # 'radius': 4,
-        # 'pop_shape': (100,),
-        # 'dataset_names': ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']},
-        #{'neighbors_topology': 'matrix',
-        # 'radius': 2,
-        # 'pop_shape': (10,10),
-        # 'dataset_names': ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']},
-        # {'neighbors_topology': 'matrix',
-        # 'radius': 3,
-        # 'pop_shape': (10,10),
-        # 'dataset_names': ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']},
-         {'neighbors_topology': 'matrix',
-         'radius': 4,
-         'pop_shape': (10,10),
-         'dataset_names': ['yacht']}
-        
-        ]
+    parameters: list[dict[str, Any]] = []
+    for dataset_name in ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']:
+        parameters.append({'dataset_name': dataset_name,
+                           'neighbors_topology': 'tournament',
+                           'radius': 4,
+                           'pop_shape': (pop_size,)})
+        parameters.append({'dataset_name': dataset_name,
+                           'neighbors_topology': 'matrix',
+                           'radius': 1,
+                           'pop_shape': (10,10)})
+        parameters.append({'dataset_name': dataset_name,
+                           'neighbors_topology': 'matrix',
+                           'radius': 2,
+                           'pop_shape': (10,10)})
+        parameters.append({'dataset_name': dataset_name,
+                           'neighbors_topology': 'matrix',
+                           'radius': 3,
+                           'pop_shape': (10,10)})
+        parameters.append({'dataset_name': dataset_name,
+                           'neighbors_topology': 'matrix',
+                           'radius': 4,
+                           'pop_shape': (10,10)})
+    
 
     start_time: float = time.time()
 
-    for parameter in parameters:  
-        run_experiment_all_datasets(
-            folder_name=folder_name,
-            dataset_names=parameter['dataset_names'],
-            dataset_path_folder=dataset_path_folder,
-            neighbors_topology=parameter['neighbors_topology'],
-            radius=parameter['radius'],
-            pop_size=pop_size,
-            pop_shape=parameter['pop_shape'],
-            num_gen=num_gen,
-            max_depth=max_depth,
-            generation_strategy=generation_strategy,
-            operators=operators,
-            low_erc=low_erc,
-            high_erc=high_erc,
-            n_constants=n_constants,
-            crossover_probability=crossover_probability,
-            mutation_probability=mutation_probability,
-            m=m,
-            duplicates_elimination=duplicates_elimination,
-            elitism=elitism
-        )
+    run_experiment_all_datasets(
+        folder_name=folder_name,
+        parameters=parameters,
+        dataset_path_folder=dataset_path_folder,
+        pop_size=pop_size,
+        num_gen=num_gen,
+        max_depth=max_depth,
+        generation_strategy=generation_strategy,
+        operators=operators,
+        low_erc=low_erc,
+        high_erc=high_erc,
+        n_constants=n_constants,
+        crossover_probability=crossover_probability,
+        mutation_probability=mutation_probability,
+        m=m,
+        duplicates_elimination=duplicates_elimination,
+        elitism=elitism
+    )
 
     end_time: float = time.time()
 

@@ -1,4 +1,4 @@
-import json
+import simplejson as json
 import re
 from typing import Any
 
@@ -126,5 +126,47 @@ class ResultUtils:
     @staticmethod
     def write_result_to_json(path: str, run_id: str, pareto_front_dict: dict[str, Any]) -> None:
         d: dict[str, Any] = {k: pareto_front_dict[k] for k in pareto_front_dict}
+        with open(path + "trainstat-" + run_id + ".json", "w") as outfile:
+            json.dump({"train_statistics": d['train_statistics']}, outfile)
+        with open(path + "teststat-" + run_id + ".json", "w") as outfile:
+            json.dump({"test_statistics": d['test_statistics']}, outfile)
+        del d['train_statistics']
+        del d['test_statistics']
         with open(path + "res-" + run_id + ".json", "w") as outfile:
             json.dump(d, outfile)
+
+    @staticmethod
+    def read_single_json_file(
+        folder_name: str,
+        result_file_type: str,
+        pop_size: int,
+        num_gen: int,
+        max_depth: int,
+        neighbors_topology: str,
+        dataset_name: str,
+        duplicates_elimination: str,
+        pop_shape: tuple[int, ...],
+        crossover_probability: float,
+        mutation_probability: float,
+        m: float,
+        radius: int,
+        generation_strategy: str,
+        elitism: bool,
+        seed: int
+    ) -> dict[str, Any]:
+        
+        pop_shape_str: str = 'x'.join([str(n) for n in pop_shape])
+        crossprob: str = str(round(crossover_probability, 2))
+        mutprob: str = str(round(mutation_probability, 2))
+        m_str: str = str(round(m, 2))
+        pressure_str: str = str(radius) if neighbors_topology == 'tournament' else str((2*radius + 1)**len(pop_shape))
+        radius_str: str = str(radius) if neighbors_topology != 'tournament' else str(0)
+        elitism_str: str = str(int(elitism))
+        seed_str: str = str(seed)
+
+        run_id: str = f"symbolictreesRMSECAGSGPSOO-popsize_{str(pop_size)}-numgen_{str(num_gen)}-maxdepth_{str(max_depth)}-neighbors_topology_{neighbors_topology}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{pop_shape_str}-crossprob_{crossprob}-mutprob_{mutprob}-m_{m_str}-radius_{radius_str}-pressure_{pressure_str}-genstrategy_{generation_strategy}-elitism_{elitism_str}-SEED{seed_str}"
+
+        with open(folder_name + result_file_type + '-' + run_id + '.json', 'r') as f:
+            data: dict[str, Any] = json.load(f)
+
+        return data

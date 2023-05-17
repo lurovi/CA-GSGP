@@ -307,7 +307,7 @@ def __ca_inspired_gsgp(
 
                 # == MUTATION ==
                 if random.random() < mutation_probability:
-                    mutation_step: float = m if m != 0 else random.uniform(0.0, 1.0 + 1e-8)
+                    mutation_step: float = m if m != 0.0 else random.uniform(0.0, 1.0 + 1e-8)
                     mut_tree: Node = structure.geometric_semantic_tree_mutation(new_tree[0], m=mutation_step, fix_properties=True)
                     new_tree = (mut_tree, {})
                 
