@@ -3,8 +3,6 @@ import re
 from typing import Any
 
 from genepro.node import Node
-from pymoo.core.population import Population
-from pymoo.core.algorithm import Algorithm
 from pytexit import py2tex
 
 from genepro.util import get_subtree_as_full_list
@@ -70,87 +68,6 @@ class ResultUtils:
     @staticmethod
     def _GetHumanExpressionSpecificNode(tree: Node, args):
         return tree._get_args_repr(args)
-
-    @staticmethod
-    def parse_result(opt: Population,
-                     history: list[Algorithm],
-                     stats: dict[str, list[Any]],
-                     biodiversity: dict[str, list[float]],
-                     objective_names: list[str],
-                     seed: int,
-                     pop_size: int,
-                     num_gen: int,
-                     num_offsprings: int,
-                     max_depth: int,
-                     generation_strategy: str,
-                     pressure: int,
-                     pop_shape: tuple[int, ...],
-                     crossover_probability: float,
-                     mutation_probability: float,
-                     m: float,
-                     execution_time_in_minutes: float,
-                     neighbors_topology: str,
-                     radius: int,
-                     dataset_name: str,
-                     duplicates_elimination: str
-                     ) -> dict[str, Any]:
-        n_objectives: int = len(objective_names)
-
-        pareto_front_dict: dict[str, Any] = {"parameters": {},
-                                             "optimal": [],
-                                             "history": [],
-                                             "n_evals": [],
-                                             "statistics": stats,
-                                             "biodiversity": biodiversity}
-        
-        pareto_front_dict["parameters"]["PopSize"] = pop_size
-        pareto_front_dict["parameters"]["NumGen"] = num_gen
-        pareto_front_dict["parameters"]["NumOffsprings"] = num_offsprings
-        pareto_front_dict["parameters"]["MaxDepth"] = max_depth
-        pareto_front_dict["parameters"]["GenerationStrategy"] = generation_strategy
-        pareto_front_dict["parameters"]["Pressure"] = pressure
-        pareto_front_dict["parameters"]["CrossoverProbability"] = crossover_probability
-        pareto_front_dict["parameters"]["MutationProbability"] = mutation_probability
-        pareto_front_dict["parameters"]["m"] = m
-        pareto_front_dict["parameters"]["ExecutionTimeInMinutes"] = execution_time_in_minutes
-        pareto_front_dict["parameters"]["NeighborsTopology"] = neighbors_topology
-        pareto_front_dict["parameters"]["Radius"] = radius
-        pareto_front_dict["parameters"]["Dataset"] = dataset_name
-        pareto_front_dict["parameters"]["DuplicatesElimination"] = duplicates_elimination
-        pareto_front_dict["parameters"]["Seed"] = seed
-        pareto_front_dict["parameters"]["NumObjectives"] = n_objectives
-        pareto_front_dict["parameters"]["ObjectiveNames"] = objective_names
-        pareto_front_dict["parameters"]["PopShape"] = [n for n in pop_shape]
-
-        for individual in opt:
-            tree: Node = individual.X[0]
-            fitness: list[float] = [individual.F[i] for i in range(n_objectives)]
-            
-            current_point: dict[str, Any] = {}
-            current_point["ParsableTree"] = str(get_subtree_as_full_list(tree))
-            current_point["LatexTree"] = ResultUtils.safe_latex_format(tree)
-            current_point["Fitness"] = {objective_names[i]: fitness[i] for i in range(n_objectives)}
-
-            pareto_front_dict["optimal"].append(current_point)
-
-        for alg in history:
-            current_gen: list[dict[str, Any]] = []
-
-            for individual in alg.opt:
-                tree: Node = individual.X[0]
-                fitness: list[float] = [individual.F[i] for i in range(n_objectives)]
-                
-                current_point: dict[str, Any] = {}
-                current_point["ParsableTree"] = str(get_subtree_as_full_list(tree))
-                current_point["LatexTree"] = ResultUtils.safe_latex_format(tree)
-                current_point["Fitness"] = {objective_names[i]: fitness[i] for i in range(n_objectives)}
-
-                current_gen.append(current_point)
-
-            pareto_front_dict["history"].append(current_gen)
-            pareto_front_dict["n_evals"].append(alg.evaluator.n_eval)
-    
-        return pareto_front_dict
 
     @staticmethod
     def parse_result_soo(
