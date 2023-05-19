@@ -76,9 +76,13 @@ class TournamentTopology(NeighborsTopology):
 
     def neighborhood(self, indices: tuple[int, ...], include_current_point: bool = True, clone: bool = False, distinct_coordinates: bool = False) -> MutableSequence[T]:
         result: MutableSequence[T] = []
+        already_seen_coordinates: set[tuple[int, ...]] = set()
         for _ in range(self.__pressure):        
             new_ii: int = int(random.random()*self.size())
+            while distinct_coordinates and (new_ii,) in already_seen_coordinates:
+                new_ii = int(random.random()*self.size())
             result.append(self.get((new_ii,),clone=clone))
+            already_seen_coordinates.add((new_ii,))
         return result
 
     def get_line_as_string(self) -> str:
