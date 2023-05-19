@@ -95,19 +95,23 @@ class RowMajorMatrix(NeighborsTopology):
     def shape(self) -> tuple[int, ...]:
         return (self.__n_rows, self.__n_cols)
 
-    def neighborhood(self, indices: tuple[int, ...], include_current_point: bool = True, clone: bool = False) -> MutableSequence[T]:
+    def neighborhood(self, indices: tuple[int, ...], include_current_point: bool = True, clone: bool = False, distinct_coordinates: bool = False) -> MutableSequence[T]:
         if len(indices) != 2:
             raise ValueError(f'The length of indices must be 2, found {len(indices)} instead.')
         i: int = indices[0]
         j: int = indices[1]
         self.__check_row_index(i)
         self.__check_col_index(j)
+        already_seen_coordinates: set[tuple[int, ...]] = set()
         result: MutableSequence[T] = []
         for ii in range(i - self.__radius, i + self.__radius + 1):
             for jj in range(j - self.__radius, j + self.__radius + 1):
                 if ii == i and jj == j:
                     if include_current_point:
-                        result.append(self.get((ii,jj),clone=clone))
+                        current_coordinate: tuple[int, ...] = (ii,jj)
+                        if not distinct_coordinates or current_coordinate not in already_seen_coordinates: 
+                            result.append(self.get(current_coordinate,clone=clone))
+                            already_seen_coordinates.add(current_coordinate)
                 else:
                     if 0 <= ii < self.n_rows():
                         new_ii: int = ii
@@ -119,7 +123,10 @@ class RowMajorMatrix(NeighborsTopology):
                     else:
                         new_jj: int = jj + (-self.__sign(jj) * self.n_cols())
                     
-                    result.append(self.get((new_ii,new_jj),clone=clone))
+                    current_coordinate: tuple[int, ...] = (new_ii,new_jj)
+                    if not distinct_coordinates or current_coordinate not in already_seen_coordinates: 
+                        result.append(self.get(current_coordinate,clone=clone))
+                        already_seen_coordinates.add(current_coordinate)
 
         return result
 

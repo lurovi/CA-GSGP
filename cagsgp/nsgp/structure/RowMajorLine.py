@@ -73,22 +73,31 @@ class RowMajorLine(NeighborsTopology):
     def shape(self) -> tuple[int, ...]:
         return (self.__size,)
 
-    def neighborhood(self, indices: tuple[int, ...], include_current_point: bool = True, clone: bool = False) -> MutableSequence[T]:
+    def neighborhood(self, indices: tuple[int, ...], include_current_point: bool = True, clone: bool = False, distinct_coordinates: bool = False) -> MutableSequence[T]:
         if len(indices) != 1:
             raise ValueError(f'The length of indices must be 1, found {len(indices)} instead.')
         i: int = indices[0]
         self.__check_index(i)
+        already_seen_coordinates: set[tuple[int, ...]] = set()
         result: MutableSequence[T] = []
         for ii in range(i - self.__radius, i + self.__radius + 1):
             if ii == i:
                 if include_current_point:
-                    result.append(self.get((ii,),clone=clone))
+                    current_coordinate: tuple[int, ...] = (ii,)
+                    if not distinct_coordinates or current_coordinate not in already_seen_coordinates: 
+                        result.append(self.get(current_coordinate,clone=clone))
+                        already_seen_coordinates.add(current_coordinate)
             else:
                 if 0 <= ii < self.size():
-                    result.append(self.get((ii,),clone=clone))
+                    new_ii: int = ii
                 else:
                     new_ii: int = ii + (-self.__sign(ii) * self.size())
-                    result.append(self.get((new_ii,),clone=clone))
+                
+                current_coordinate: tuple[int, ...] = (new_ii,)
+                if not distinct_coordinates or current_coordinate not in already_seen_coordinates: 
+                    result.append(self.get(current_coordinate,clone=clone))
+                    already_seen_coordinates.add(current_coordinate)
+        
         return result
 
     def get_line_as_string(self) -> str:

@@ -110,7 +110,7 @@ class RowMajorCube(NeighborsTopology):
     def shape(self) -> tuple[int, ...]:
         return (self.__n_channels, self.__n_rows, self.__n_cols)
 
-    def neighborhood(self, indices: tuple[int, ...], include_current_point: bool = True, clone: bool = False) -> MutableSequence[T]:
+    def neighborhood(self, indices: tuple[int, ...], include_current_point: bool = True, clone: bool = False, distinct_coordinates: bool = False) -> MutableSequence[T]:
         if len(indices) != 3:
             raise ValueError(f'The length of indices must be 3, found {len(indices)} instead.')
         l: int = indices[0]
@@ -119,13 +119,17 @@ class RowMajorCube(NeighborsTopology):
         self.__check_channel_index(l)
         self.__check_row_index(i)
         self.__check_col_index(j)
+        already_seen_coordinates: set[tuple[int, ...]] = set()
         result: MutableSequence[T] = []
         for ll in range(l - self.__radius, l + self.__radius + 1):
             for ii in range(i - self.__radius, i + self.__radius + 1):
                 for jj in range(j - self.__radius, j + self.__radius + 1):
                     if ll == l and ii == i and jj == j:
                         if include_current_point:
-                            result.append(self.get((ll,ii,jj),clone=clone))
+                            current_coordinate: tuple[int, ...] = (ll,ii,jj)
+                            if not distinct_coordinates or current_coordinate not in already_seen_coordinates: 
+                                result.append(self.get(current_coordinate,clone=clone))
+                                already_seen_coordinates.add(current_coordinate)
                     else:
                         if 0 <= ll < self.n_channels():
                             new_ll: int = ll
@@ -142,7 +146,11 @@ class RowMajorCube(NeighborsTopology):
                         else:
                             new_jj: int = jj + (-self.__sign(jj) * self.n_cols())
                         
-                        result.append(self.get((new_ll,new_ii,new_jj),clone=clone))
+                        current_coordinate: tuple[int, ...] = (new_ll,new_ii,new_jj)
+                        if not distinct_coordinates or current_coordinate not in already_seen_coordinates: 
+                            result.append(self.get(current_coordinate,clone=clone))
+                            already_seen_coordinates.add(current_coordinate)
+        
         return result
 
     def get_cube_as_string(self) -> str:
