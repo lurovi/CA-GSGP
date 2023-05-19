@@ -74,7 +74,7 @@ class TournamentTopology(NeighborsTopology):
     def shape(self) -> tuple[int, ...]:
         return (self.__size,)
 
-    def neighborhood(self, indices: tuple[int, ...], include_current_point: bool = True, clone: bool = False) -> MutableSequence[T]:
+    def neighborhood(self, indices: tuple[int, ...], include_current_point: bool = True, clone: bool = False, distinct_coordinates: bool = False) -> MutableSequence[T]:
         result: MutableSequence[T] = []
         for _ in range(self.__pressure):        
             new_ii: int = int(random.random()*self.size())

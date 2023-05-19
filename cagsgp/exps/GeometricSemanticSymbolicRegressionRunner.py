@@ -220,7 +220,7 @@ def __ca_inspired_gsgp(
     
     if not is_tournament_selection:
         for coordinate in all_possible_coordinates:
-            curr_neighs: list[tuple[int, ...]] = neigh_top_indices.neighborhood(coordinate, include_current_point=True, clone=False)
+            curr_neighs: list[tuple[int, ...]] = neigh_top_indices.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=True)
             all_neighborhoods_indices[coordinate] = curr_neighs
     curr_neighs = None
     neigh_top_indices = None
@@ -270,10 +270,10 @@ def __ca_inspired_gsgp(
                 first: tuple[int, Node, float] = competitors[0]
                 second: tuple[int, Node, float] = competitors[1]
             else:
-                competitors: list[tuple[int, Node, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False)
+                competitors: list[tuple[int, Node, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
                 competitors.sort(key=lambda x: x[2], reverse=False)
                 first: tuple[int, Node, float] = competitors[0]
-                competitors = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False)
+                competitors = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
                 competitors.sort(key=lambda x: x[2], reverse=False)
                 second: tuple[int, Node, float] = competitors[0]
             
