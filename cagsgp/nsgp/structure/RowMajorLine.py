@@ -88,10 +88,7 @@ class RowMajorLine(NeighborsTopology):
                         result.append(self.get(current_coordinate,clone=clone))
                         already_seen_coordinates.add(current_coordinate)
             else:
-                if 0 <= ii < self.size():
-                    new_ii: int = ii
-                else:
-                    new_ii: int = ii + (-self.__sign(ii) * self.size())
+                new_ii: int = ii % self.size()
                 
                 current_coordinate: tuple[int, ...] = (new_ii,)
                 if not distinct_coordinates or current_coordinate not in already_seen_coordinates: 
@@ -113,6 +110,3 @@ class RowMajorLine(NeighborsTopology):
     def __check_index(self, i: int) -> None:
         if not 0 <= i < self.size():
             raise IndexError(f'Index {i} is out of range with declared size ({self.size()})')
-        
-    def __sign(self, i: int) -> int:
-        return -1 if i < 0 else 1

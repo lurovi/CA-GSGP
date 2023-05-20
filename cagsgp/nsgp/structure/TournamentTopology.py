@@ -98,6 +98,3 @@ class TournamentTopology(NeighborsTopology):
     def __check_index(self, i: int) -> None:
         if not 0 <= i < self.size():
             raise IndexError(f'Index {i} is out of range with declared size ({self.size()})')
-        
-    def __sign(self, i: int) -> int:
-        return -1 if i < 0 else 1

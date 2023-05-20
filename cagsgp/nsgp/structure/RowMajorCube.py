@@ -131,20 +131,9 @@ class RowMajorCube(NeighborsTopology):
                                 result.append(self.get(current_coordinate,clone=clone))
                                 already_seen_coordinates.add(current_coordinate)
                     else:
-                        if 0 <= ll < self.n_channels():
-                            new_ll: int = ll
-                        else:
-                            new_ll: int = ll + (-self.__sign(ll) * self.n_channels())
-                        
-                        if 0 <= ii < self.n_rows():
-                            new_ii: int = ii
-                        else:
-                            new_ii: int = ii + (-self.__sign(ii) * self.n_rows())
-                        
-                        if 0 <= jj < self.n_cols():
-                            new_jj: int = jj
-                        else:
-                            new_jj: int = jj + (-self.__sign(jj) * self.n_cols())
+                        new_ll: int = ll % self.n_channels()
+                        new_ii: int = ii % self.n_rows()
+                        new_jj: int = jj % self.n_cols()
                         
                         current_coordinate: tuple[int, ...] = (new_ll,new_ii,new_jj)
                         if not distinct_coordinates or current_coordinate not in already_seen_coordinates: 
@@ -181,6 +170,3 @@ class RowMajorCube(NeighborsTopology):
     def __check_col_index(self, j: int) -> None:
         if not 0 <= j < self.n_cols():
             raise IndexError(f'Index {j} is out of range with declared number of cols ({self.n_cols()})')
-    
-    def __sign(self, i: int) -> int:
-        return -1 if i < 0 else 1
