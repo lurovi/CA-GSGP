@@ -166,7 +166,7 @@ class PlotUtils:
             sns.set_theme(font="STIXGeneral", palette="colorblind", style="white", font_scale=1.6,
                       rc={'figure.figsize': (13, 10), 'pdf.fonttype': 42, 'ps.fonttype': 42,
                           'axes.formatter.use_mathtext': True, 'axes.unicode_minus': False})
-            g = sns.boxplot(data=data, x="Topology", y="Best RMSE", hue="Split type", palette="colorblind")
+            g = sns.boxplot(data=data, x="Split type", y="Best RMSE", hue="Topology", palette="colorblind")
             plt.title(title)
             plt.legend(fontsize='small', title_fontsize='small')
             if log_scale_y:
@@ -266,7 +266,6 @@ if __name__ == '__main__':
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
     output_path: str = codebase_folder + 'python_data/CA-GSGP/' + 'images_1' + '/'
 
-    
     PlotUtils.simple_line_plot_topology_split(folder_name=folder_name,
                                               output_path=output_path,
                                               seed_list=list(range(1, 100 + 1)), 
@@ -289,7 +288,6 @@ if __name__ == '__main__':
                                               generation_strategy='half',
                                               elitism=True
                                               )
-    
 
     
     PlotUtils.simple_box_plot_topology_split(folder_name=folder_name,
@@ -315,7 +313,6 @@ if __name__ == '__main__':
                                               elitism=True
                                               )
     
-
     PlotUtils.simple_heat_plot_topology_split_wilcoxon(folder_name=folder_name,
                                               output_path=output_path,
                                               seed_list=list(range(1, 100 + 1)), 
@@ -337,8 +334,7 @@ if __name__ == '__main__':
                                               generation_strategy='half',
                                               elitism=True
                                               )
-
-
+    
 
 
     
