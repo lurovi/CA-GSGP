@@ -167,32 +167,31 @@ class TreeStructure:
     def get_size(self) -> int:
         return self.__size
 
-    def generate_tree(self) -> Node:
+    def generate_tree(self, **kwargs) -> Node:
         return generate_tree_wrt_strategy(self.__operators, self.__terminals, max_depth=self.get_max_depth(),
                                     ephemeral_func=self.__ephemeral_func, p=self.__p,
-                                    generation_strategy=self.__generation_strategy, fixed_constants=self.__fixed_constants)
+                                    generation_strategy=self.__generation_strategy, fixed_constants=self.__fixed_constants, **kwargs)
 
-    def safe_subtree_mutation(self, tree: Node) -> Node:
+    def safe_subtree_mutation(self, tree: Node, **kwargs) -> Node:
         return safe_subtree_mutation(tree, self.__operators, self.__terminals, max_depth=self.__max_depth,
                                      ephemeral_func=self.__ephemeral_func, p=self.__p, fixed_constants=self.__fixed_constants,
-                                     generation_strategy=self.__generation_strategy)
+                                     generation_strategy=self.__generation_strategy, **kwargs)
 
     def safe_subtree_crossover_two_children(self, tree_1: Node, tree_2: Node) -> tuple[Node, Node]:
         return safe_subtree_crossover_two_children(tree_1, tree_2, max_depth=self.__max_depth)
 
-    def geometric_semantic_single_tree_crossover(self, tree_1: Node, tree_2: Node, enable_caching: bool = False, fix_properties: bool = False) -> Node:
-        cx_tree: Node = GSGPCrossover(enable_caching=enable_caching, fix_properties=fix_properties)
-        cx_tree.insert_child(Pointer(tree_1, fix_properties=fix_properties))
-        cx_tree.insert_child(Pointer(tree_2, fix_properties=fix_properties))
-        cx_tree.insert_child(self.generate_tree())
-        return cx_tree
+    def geometric_semantic_single_tree_crossover(self, tree_1: Node, tree_2: Node, enable_caching: bool = False, fix_properties: bool = False, **kwargs) -> Node:
+        return geometric_semantic_single_tree_crossover(tree_1, tree_2, internal_nodes=self.__operators, leaf_nodes=self.__terminals,
+                                                        max_depth=self.__max_depth, ephemeral_func=self.__ephemeral_func, p=self.__p,
+                                                        fixed_constants=self.__fixed_constants, generation_strategy=self.__generation_strategy,
+                                                        fix_properties=fix_properties, enable_caching=enable_caching, **kwargs)
 
-    def geometric_semantic_tree_mutation(self, tree: Node, m: float, fix_properties: bool = False) -> Node:
-        mut_tree: Node = GSGPMutation(m=m, fix_properties=fix_properties)
-        mut_tree.insert_child(Pointer(tree, fix_properties=fix_properties))
-        mut_tree.insert_child(self.generate_tree())
-        mut_tree.insert_child(self.generate_tree())
-        return mut_tree
+    def geometric_semantic_tree_mutation(self, tree: Node, m: float, fix_properties: bool = False, **kwargs) -> Node:
+        return geometric_semantic_tree_mutation(tree, internal_nodes=self.__operators, leaf_nodes=self.__terminals,
+                                                max_depth=self.__max_depth, generation_strategy=self.__generation_strategy,
+                                                ephemeral_func=self.__ephemeral_func, p=self.__p,
+                                                fixed_constants=self.__fixed_constants, m=m, fix_properties=fix_properties,
+                                                **kwargs)
         
     def get_dict_representation(self, tree: Node) -> dict[int, str]:
         return tree.get_dict_repr(self.get_max_arity())
@@ -253,19 +252,19 @@ class TreeStructure:
         return concatenate_nodes_with_binary_operator(forest=forest, binary_operator=binary_operator,
                                                       copy_tree=copy_tree)
 
-    def generate_forest(self, n_trees: int = None, n_trees_min: int = 2, n_trees_max: int = 10, tree_prob: float = 0.70) -> list[Node]:
+    def generate_forest(self, n_trees: int = None, n_trees_min: int = 2, n_trees_max: int = 10, tree_prob: float = 0.70, **kwargs) -> list[Node]:
         return generate_random_forest(internal_nodes=self.__operators, leaf_nodes=self.__terminals,
                                       max_depth=self.get_max_depth(), ephemeral_func=self.__ephemeral_func,
                                       p=self.__p, n_trees=n_trees, n_trees_min=n_trees_min, n_trees_max=n_trees_max,
                                       tree_prob=tree_prob, generation_strategy=self.__generation_strategy,
-                                      fixed_constants=self.__fixed_constants)
+                                      fixed_constants=self.__fixed_constants, **kwargs)
 
-    def safe_subforest_mutation(self, forest: list[Node]) -> list[Node]:
+    def safe_subforest_mutation(self, forest: list[Node], **kwargs) -> list[Node]:
         return safe_subforest_mutation(forest, internal_nodes=self.__operators, leaf_nodes=self.__terminals,
                                        max_depth=self.get_max_depth(),
                                        ephemeral_func=self.__ephemeral_func, p=self.__p,
                                        generation_strategy=self.__generation_strategy,
-                                       fixed_constants=self.__fixed_constants)
+                                       fixed_constants=self.__fixed_constants, **kwargs)
 
     @staticmethod
     def safe_subforest_one_point_crossover_two_children(forest_1: list[Node], forest_2: list[Node], max_length: int = None) -> tuple[list[Node], list[Node]]:
@@ -280,8 +279,8 @@ class TreeStructure:
         return str(TreeStructure.get_subtree_as_full_list(tree))
     
     @staticmethod
-    def retrieve_tree_from_string(prefix_repr: str) -> Node:
-        return tree_from_prefix_repr(prefix_repr)
+    def retrieve_tree_from_string(prefix_repr: str, fix_properties: bool = False, enable_caching: bool = False, **kwargs) -> Node:
+        return tree_from_prefix_repr(prefix_repr, fix_properties=fix_properties, enable_caching=enable_caching, **kwargs)
     
     @staticmethod
     def get_readable_repr(node: Node) -> str:
