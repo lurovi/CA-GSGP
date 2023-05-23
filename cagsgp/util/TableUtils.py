@@ -29,21 +29,51 @@ class TableUtils:
             generation_strategy: str,
             elitism: bool
     ) -> None:
-        
-        for split_type in ['Train', 'Test']:
-            print()
-            print(split_type)
-            print()
-            tab_str: str = ''
-            fitness: dict[str, dict[str, list[float]]] = {}
+            
+        tab_str: str = ''
 
-            # ===================
-            # Load tournament-4 baseline result
-            # ===================
+        # K1: Method - K2: DatasetName - K3: SplitType - V: list of best RMSE across all seeds
+        fitness: dict[str, dict[str, dict[str, list[float]]]] = {}
 
-            fitness['Tournament-4'] = {}
+        # ===================
+        # Load tournament-4 baseline result
+        # ===================
+
+        fitness['Tournament-4'] = {}
+        for dataset_name in dataset_names:
+            fitness['Tournament-4'][dataset_name] = {'Train': [], 'Test': []}
+            for seed in seed_list:
+                d: dict[str, Any] = ResultUtils.read_single_json_file(
+                    folder_name=folder_name,
+                    result_file_type='res',
+                    pop_size=pop_size,
+                    num_gen=num_gen,
+                    max_depth=max_depth,
+                    neighbors_topology='tournament',
+                    dataset_name=dataset_name,
+                    duplicates_elimination=duplicates_elimination,
+                    pop_shape=(pop_size,),
+                    crossover_probability=crossover_probability,
+                    mutation_probability=mutation_probability,
+                    m=m,
+                    radius=4,
+                    generation_strategy=generation_strategy,
+                    elitism=elitism,
+                    seed=seed
+                )
+                best: dict[str, Any] = d['history'][last_gen]
+                fitness['Tournament-4'][dataset_name]['Train'].append(best['Fitness']['Train RMSE'])
+                fitness['Tournament-4'][dataset_name]['Test'].append(best['Fitness']['Test RMSE'])
+    
+        # ===================
+        # Load other methods
+        # ===================
+
+        for topology, radius, shape in topologies_radius_shapes:
+            current_method: str = TableUtils.only_first_char_upper(topology)+'-'+str(radius)
+            fitness[current_method] = {}
             for dataset_name in dataset_names:
-                fitness['Tournament-4'][dataset_name] = []
+                fitness[current_method][dataset_name] = {'Train': [], 'Test': []}
                 for seed in seed_list:
                     d: dict[str, Any] = ResultUtils.read_single_json_file(
                         folder_name=folder_name,
@@ -51,69 +81,40 @@ class TableUtils:
                         pop_size=pop_size,
                         num_gen=num_gen,
                         max_depth=max_depth,
-                        neighbors_topology='tournament',
+                        neighbors_topology=topology,
                         dataset_name=dataset_name,
                         duplicates_elimination=duplicates_elimination,
-                        pop_shape=(pop_size,),
+                        pop_shape=shape,
                         crossover_probability=crossover_probability,
                         mutation_probability=mutation_probability,
                         m=m,
-                        radius=4,
+                        radius=radius,
                         generation_strategy=generation_strategy,
                         elitism=elitism,
                         seed=seed
                     )
                     best: dict[str, Any] = d['history'][last_gen]
-                    fitness['Tournament-4'][dataset_name].append(best['Fitness'][split_type+' RMSE'])
-        
-            # ===================
-            # Load other methods
-            # ===================
+                    fitness[current_method][dataset_name]['Train'].append(best['Fitness']['Train RMSE'])
+                    fitness[current_method][dataset_name]['Test'].append(best['Fitness']['Test RMSE'])
 
-            for topology, radius, shape in topologies_radius_shapes:
-                current_method: str = TableUtils.only_first_char_upper(topology)+'-'+str(radius)
-                fitness[current_method] = {}
-                for dataset_name in dataset_names:
-                    fitness[current_method][dataset_name] = []
-                    for seed in seed_list:
-                        d: dict[str, Any] = ResultUtils.read_single_json_file(
-                            folder_name=folder_name,
-                            result_file_type='res',
-                            pop_size=pop_size,
-                            num_gen=num_gen,
-                            max_depth=max_depth,
-                            neighbors_topology=topology,
-                            dataset_name=dataset_name,
-                            duplicates_elimination=duplicates_elimination,
-                            pop_shape=shape,
-                            crossover_probability=crossover_probability,
-                            mutation_probability=mutation_probability,
-                            m=m,
-                            radius=radius,
-                            generation_strategy=generation_strategy,
-                            elitism=elitism,
-                            seed=seed
-                        )
-                        best: dict[str, Any] = d['history'][last_gen]
-                        fitness[current_method][dataset_name].append(best['Fitness'][split_type+' RMSE'])
+        # ===================
+        # Print table content
+        # ===================
 
-            # ===================
-            # Print table content
-            # ===================
-
-            for method in ['Line-1', 'Line-2', 'Line-3', 'Line-4',
-                           'Matrix-1', 'Matrix-2', 'Matrix-3', 'Matrix-4',
-                           'Cube-1', 'Cube-2', 'Cube-3', 'Cube-4']:
-                tab_str += '{' + method + '}' + '\n'
-                for dataset_name in ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']:
-                    a: list[float] = fitness[method][dataset_name]
-                    b: list[float] = fitness['Tournament-4'][dataset_name]
+        for method in ['Line-1', 'Line-2', 'Line-3', 'Line-4',
+                        'Matrix-1', 'Matrix-2', 'Matrix-3', 'Matrix-4',
+                        'Cube-1', 'Cube-2', 'Cube-3', 'Cube-4']:
+            tab_str += '{' + method + '}' + '\n'
+            for dataset_name in ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']:
+                for split_type in ['Train', 'Test']:
+                    a: list[float] = fitness[method][dataset_name][split_type]
+                    b: list[float] = fitness['Tournament-4'][dataset_name][split_type]
                     p: float = round(stats.wilcoxon(a, b, alternative="less").pvalue, 2) if a != b else 1.0
                     tab_str += '& ' + str(p) + ' '
-                tab_str += '\n'
-                tab_str += '\\\\'
-                tab_str += '\n'
-            print(tab_str)
+            tab_str += '\n'
+            tab_str += '\\\\'
+            tab_str += '\n'
+        print(tab_str)
 
 
 if __name__ == '__main__':
@@ -138,7 +139,6 @@ if __name__ == '__main__':
                                                                         ('cube',4,(4,5,5))],
                                               
                                               dataset_names=['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht'],
-                                              
                                               pop_size=100,
                                               num_gen=1000,
                                               last_gen=1000,
