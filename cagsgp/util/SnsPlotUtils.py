@@ -13,7 +13,7 @@ import scipy.stats as stats
 from cagsgp.util.ResultUtils import ResultUtils
 
 
-class PlotUtils:
+class SnsPlotUtils:
     def __init__(self) -> None:
         super().__init__()
 
@@ -49,7 +49,7 @@ class PlotUtils:
                                           'Topology': [],
                                           'Best RMSE': []}
             
-            title: str = PlotUtils.only_first_char_upper(dataset_name) + ' Median Best RMSE'
+            title: str = SnsPlotUtils.only_first_char_upper(dataset_name) + ' Median Best RMSE'
             file_name: str = 'lineplot'+'-'+dataset_name+'-'+main_topology_name+'.png'
 
             for topology, radius, shape in topologies_radius_shapes:
@@ -76,12 +76,12 @@ class PlotUtils:
                     d = None
                     for i, d in enumerate(history, 0):
                         data['Generation'].append(i)
-                        data['Topology'].append(PlotUtils.only_first_char_upper(topology)+'-'+str(radius))
+                        data['Topology'].append(SnsPlotUtils.only_first_char_upper(topology)+'-'+str(radius))
                         data['Split type'].append('Train')
                         data['Best RMSE'].append(d['Fitness']['Train RMSE'])
 
                         data['Generation'].append(i)
-                        data['Topology'].append(PlotUtils.only_first_char_upper(topology)+'-'+str(radius))
+                        data['Topology'].append(SnsPlotUtils.only_first_char_upper(topology)+'-'+str(radius))
                         data['Split type'].append('Test')
                         data['Best RMSE'].append(d['Fitness']['Test RMSE'])
                     history = None
@@ -128,7 +128,7 @@ class PlotUtils:
                                           'Split type': [],
                                           'Best RMSE': []}
             
-            title: str = PlotUtils.only_first_char_upper(dataset_name) + ' Best RMSE'
+            title: str = SnsPlotUtils.only_first_char_upper(dataset_name) + ' Best RMSE'
             file_name: str = 'boxplot'+'-'+dataset_name+'-'+main_topology_name+'.png'
 
             for topology, radius, shape in topologies_radius_shapes:
@@ -153,11 +153,11 @@ class PlotUtils:
                     )
                     best: dict[str, Any] = d['history'][last_gen]
                     d = None
-                    data['Topology'].append(PlotUtils.only_first_char_upper(topology)+'-'+str(radius))
+                    data['Topology'].append(SnsPlotUtils.only_first_char_upper(topology)+'-'+str(radius))
                     data['Split type'].append('Train')
                     data['Best RMSE'].append(best['Fitness']['Train RMSE'])
 
-                    data['Topology'].append(PlotUtils.only_first_char_upper(topology)+'-'+str(radius))
+                    data['Topology'].append(SnsPlotUtils.only_first_char_upper(topology)+'-'+str(radius))
                     data['Split type'].append('Test')
                     data['Best RMSE'].append(best['Fitness']['Test RMSE'])
                     best = None
@@ -205,11 +205,11 @@ class PlotUtils:
                                             'p-value': []}
                 fitness: dict[str, list[float]] = {}
                 
-                title: str = PlotUtils.only_first_char_upper(dataset_name) + ' Wilcoxon Test on Best RMSE (' + split_type + ')'
+                title: str = SnsPlotUtils.only_first_char_upper(dataset_name) + ' Wilcoxon Test on Best RMSE (' + split_type + ')'
                 file_name: str = 'heatmap-wilcoxon'+'-'+split_type+'-'+dataset_name+'-'+main_topology_name+'.png'
 
                 for topology, radius, shape in topologies_radius_shapes:
-                    name: str = PlotUtils.only_first_char_upper(topology)+'-'+str(radius)
+                    name: str = SnsPlotUtils.only_first_char_upper(topology)+'-'+str(radius)
                     fitness[name] = []
                     for seed in seed_list:
                         d: dict[str, Any] = ResultUtils.read_single_json_file(
@@ -266,7 +266,7 @@ if __name__ == '__main__':
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
     output_path: str = codebase_folder + 'python_data/CA-GSGP/' + 'images_1' + '/'
 
-    PlotUtils.simple_line_plot_topology_split(folder_name=folder_name,
+    SnsPlotUtils.simple_line_plot_topology_split(folder_name=folder_name,
                                               output_path=output_path,
                                               seed_list=list(range(1, 100 + 1)), 
                                               topologies_radius_shapes=[('tournament',4,(100,)),
@@ -290,7 +290,7 @@ if __name__ == '__main__':
                                               )
 
     
-    PlotUtils.simple_box_plot_topology_split(folder_name=folder_name,
+    SnsPlotUtils.simple_box_plot_topology_split(folder_name=folder_name,
                                               output_path=output_path,
                                               seed_list=list(range(1, 100 + 1)), 
                                               topologies_radius_shapes=[('tournament',4,(100,)),
@@ -313,7 +313,7 @@ if __name__ == '__main__':
                                               elitism=True
                                               )
     
-    PlotUtils.simple_heat_plot_topology_split_wilcoxon(folder_name=folder_name,
+    SnsPlotUtils.simple_heat_plot_topology_split_wilcoxon(folder_name=folder_name,
                                               output_path=output_path,
                                               seed_list=list(range(1, 100 + 1)), 
                                               topologies_radius_shapes=[('tournament',4,(100,)),
