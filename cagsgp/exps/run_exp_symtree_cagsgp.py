@@ -127,13 +127,13 @@ if __name__ == '__main__':
     # Datasets: ['airfoil', 'bioav', 'concrete', 'parkinson', 'ppb', 'slump', 'toxicity', 'vladislavleva-14', 'yacht']
     # Datasets: ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
-    folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_2' + '/'
-    #folder_name: str = '/mnt/data/lrovito/' + 'CA-GSGP/' + 'results_1' + '/'
+    folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
+    #folder_name: str = '/home/luigirovito/python_data/' + 'CA-GSGP/' + 'results_1' + '/'
     dataset_path_folder: str = codebase_folder + 'python_data/CA-GSGP/datasets_csv/'
-    #dataset_path_folder: str = '/mnt/data/lrovito/' + 'CA-GSGP/datasets_csv/'
+    #dataset_path_folder: str = '/home/luigirovito/python_data/' + 'CA-GSGP/datasets_csv/'
 
     pop_size: int = 100
-    num_gen: int = 100
+    num_gen: int = 1000
     m: float = 0.0
     max_depth: int = 6
     elitism: bool = True
@@ -148,27 +148,75 @@ if __name__ == '__main__':
     n_constants: int = 100
 
     parameters: list[dict[str, Any]] = []
-    for dataset_name in ['airfoil']:
+    for dataset_name in ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']:
+        #parameters.append({'dataset_name': dataset_name,
+        #                   'neighbors_topology': 'tournament',
+        #                   'radius': 4,
+        #                   'pop_shape': (pop_size,)})
+        #parameters.append({'dataset_name': dataset_name,
+        #                   'neighbors_topology': 'tournament',
+        #                   'radius': 7,
+        #                   'pop_shape': (pop_size,)})
+        #parameters.append({'dataset_name': dataset_name,
+        #                   'neighbors_topology': 'tournament',
+        #                   'radius': 10,
+        #                   'pop_shape': (pop_size,)})
+        #parameters.append({'dataset_name': dataset_name,
+        #                   'neighbors_topology': 'tournament',
+        #                   'radius': 15,
+        #                   'pop_shape': (pop_size,)})
+        #parameters.append({'dataset_name': dataset_name,
+        #                   'neighbors_topology': 'tournament',
+        #                   'radius': 20,
+        #                   'pop_shape': (pop_size,)})
+        #parameters.append({'dataset_name': dataset_name,
+        #                   'neighbors_topology': 'tournament',
+        #                   'radius': 25,
+        #                   'pop_shape': (pop_size,)})
+        #parameters.append({'dataset_name': dataset_name,
+        #                   'neighbors_topology': 'tournament',
+        #                   'radius': 30,
+        #                   'pop_shape': (pop_size,)})
         parameters.append({'dataset_name': dataset_name,
-                           'neighbors_topology': 'tournament',
-                           'radius': 4,
-                           'pop_shape': (pop_size,)})
-        # parameters.append({'dataset_name': dataset_name,
-        #                    'neighbors_topology': 'matrix',
-        #                    'radius': 1,
-        #                    'pop_shape': (10,10)})
+                            'neighbors_topology': 'line',
+                            'radius': 1,
+                            'pop_shape': (100,)})
+        parameters.append({'dataset_name': dataset_name,
+                           'neighbors_topology': 'line',
+                           'radius': 2,
+                           'pop_shape': (100,)})
+        parameters.append({'dataset_name': dataset_name,
+                            'neighbors_topology': 'line',
+                            'radius': 3,
+                            'pop_shape': (100,)})
+        parameters.append({'dataset_name': dataset_name,
+                            'neighbors_topology': 'line',
+                            'radius': 4,
+                            'pop_shape': (100,)})
+        parameters.append({'dataset_name': dataset_name,
+                            'neighbors_topology': 'matrix',
+                            'radius': 1,
+                            'pop_shape': (10,10)})
         parameters.append({'dataset_name': dataset_name,
                            'neighbors_topology': 'matrix',
                            'radius': 2,
                            'pop_shape': (10,10)})
-        # parameters.append({'dataset_name': dataset_name,
-        #                    'neighbors_topology': 'matrix',
-        #                    'radius': 3,
-        #                    'pop_shape': (10,10)})
-        # parameters.append({'dataset_name': dataset_name,
-        #                    'neighbors_topology': 'matrix',
-        #                    'radius': 4,
-        #                    'pop_shape': (10,10)})
+        parameters.append({'dataset_name': dataset_name,
+                            'neighbors_topology': 'matrix',
+                            'radius': 3,
+                            'pop_shape': (10,10)})
+        parameters.append({'dataset_name': dataset_name,
+                            'neighbors_topology': 'matrix',
+                            'radius': 4,
+                            'pop_shape': (10,10)})
+        parameters.append({'dataset_name': dataset_name,
+                            'neighbors_topology': 'cube',
+                            'radius': 1,
+                            'pop_shape': (4,5,5)})
+        parameters.append({'dataset_name': dataset_name,
+                           'neighbors_topology': 'cube',
+                           'radius': 2,
+                           'pop_shape': (4,5,5)})
     
 
     start_time: float = time.time()
@@ -191,7 +239,7 @@ if __name__ == '__main__':
         duplicates_elimination=duplicates_elimination,
         elitism=elitism,
         start_seed=1,
-        end_seed=2,
+        end_seed=100,
         gen_verbosity_level=num_gen,
         multiprocess=True,
         verbose=True
