@@ -126,13 +126,13 @@ class ResultUtils:
     @staticmethod
     def write_result_to_json(path: str, run_id: str, pareto_front_dict: dict[str, Any]) -> None:
         d: dict[str, Any] = {k: pareto_front_dict[k] for k in pareto_front_dict}
-        with open(path + "trainstat-" + run_id + ".json", "w") as outfile:
+        with open(path + "tr" + run_id + ".json", "w") as outfile:
             json.dump({"train_statistics": d['train_statistics']}, outfile)
-        with open(path + "teststat-" + run_id + ".json", "w") as outfile:
+        with open(path + "te" + run_id + ".json", "w") as outfile:
             json.dump({"test_statistics": d['test_statistics']}, outfile)
         del d['train_statistics']
         del d['test_statistics']
-        with open(path + "res-" + run_id + ".json", "w") as outfile:
+        with open(path + "b" + run_id + ".json", "w") as outfile:
             json.dump(d, outfile)
 
     @staticmethod
@@ -164,9 +164,9 @@ class ResultUtils:
         elitism_str: str = str(int(elitism))
         seed_str: str = str(seed)
 
-        run_id: str = f"symbolictreesRMSECAGSGPSOO-popsize_{str(pop_size)}-numgen_{str(num_gen)}-maxdepth_{str(max_depth)}-neighbors_topology_{neighbors_topology}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{pop_shape_str}-crossprob_{crossprob}-mutprob_{mutprob}-m_{m_str}-radius_{radius_str}-pressure_{pressure_str}-genstrategy_{generation_strategy}-elitism_{elitism_str}-SEED{seed_str}"
+        run_id: str = f"cgsgp-popsize_{str(pop_size)}-numgen_{str(num_gen)}-maxdepth_{str(max_depth)}-neighbors_topology_{neighbors_topology}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{pop_shape_str}-crossprob_{crossprob}-mutprob_{mutprob}-m_{m_str}-radius_{radius_str}-pressure_{pressure_str}-genstrategy_{generation_strategy}-elitism_{elitism_str}-SEED{seed_str}"
 
-        with open(folder_name + result_file_type + '-' + run_id + '.json', 'r') as f:
+        with open(folder_name + result_file_type + run_id + '.json', 'r') as f:
             data: dict[str, Any] = json.load(f)
 
         return data

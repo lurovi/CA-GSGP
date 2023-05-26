@@ -155,6 +155,10 @@ if __name__ == '__main__':
         #                   'pop_shape': (pop_size,)})
         #parameters.append({'dataset_name': dataset_name,
         #                   'neighbors_topology': 'tournament',
+        #                   'radius': 5,
+        #                   'pop_shape': (pop_size,)})
+        #parameters.append({'dataset_name': dataset_name,
+        #                   'neighbors_topology': 'tournament',
         #                   'radius': 7,
         #                   'pop_shape': (pop_size,)})
         #parameters.append({'dataset_name': dataset_name,

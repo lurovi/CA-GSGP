@@ -53,7 +53,7 @@ class SnsPlotUtils:
                 for seed in seed_list:
                     d: dict[str, Any] = ResultUtils.read_single_json_file(
                         folder_name=folder_name,
-                        result_file_type='res',
+                        result_file_type='b',
                         pop_size=pop_size,
                         num_gen=num_gen,
                         max_depth=max_depth,
@@ -132,7 +132,7 @@ class SnsPlotUtils:
                 for seed in seed_list:
                     d: dict[str, Any] = ResultUtils.read_single_json_file(
                         folder_name=folder_name,
-                        result_file_type='res',
+                        result_file_type='b',
                         pop_size=pop_size,
                         num_gen=num_gen,
                         max_depth=max_depth,
@@ -211,7 +211,7 @@ class SnsPlotUtils:
                     for seed in seed_list:
                         d: dict[str, Any] = ResultUtils.read_single_json_file(
                             folder_name=folder_name,
-                            result_file_type='res',
+                            result_file_type='b',
                             pop_size=pop_size,
                             num_gen=num_gen,
                             max_depth=max_depth,
@@ -291,7 +291,7 @@ class SnsPlotUtils:
                 for seed in seed_list:
                     d: dict[str, Any] = ResultUtils.read_single_json_file(
                         folder_name=folder_name,
-                        result_file_type='res',
+                        result_file_type='b',
                         pop_size=pop_size,
                         num_gen=num_gen,
                         max_depth=max_depth,
@@ -366,7 +366,7 @@ class SnsPlotUtils:
                 for seed in seed_list:
                     d: dict[str, Any] = ResultUtils.read_single_json_file(
                         folder_name=folder_name,
-                        result_file_type='res',
+                        result_file_type='b',
                         pop_size=pop_size,
                         num_gen=num_gen,
                         max_depth=max_depth,
@@ -410,8 +410,9 @@ if __name__ == '__main__':
     # Datasets: ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
-    output_path: str = codebase_folder + 'python_data/CA-GSGP/' + 'images_2' + '/'
+    output_path: str = codebase_folder + 'python_data/CA-GSGP/' + 'images_1' + '/'
 
+    '''
     SnsPlotUtils.simple_line_plot_topology_single_split_type(folder_name=folder_name,
                                               output_path=output_path,
                                               split_type='Test',
@@ -462,17 +463,17 @@ if __name__ == '__main__':
                                               generation_strategy='half',
                                               elitism=True
                                               )
-
     '''
+    
     SnsPlotUtils.simple_line_plot_topology_split(folder_name=folder_name,
                                               output_path=output_path,
                                               seed_list=list(range(1, 100 + 1)), 
                                               topologies_radius_shapes=[('tournament',4,(100,)),
-                                                                        ('cube',1,(4,5,5)),
-                                                                        ('cube',2,(4,5,5)),
-                                                                        ('cube',3,(4,5,5)),
-                                                                        ('cube',4,(4,5,5))],
-                                              main_topology_name='cube',
+                                                                        ('matrix',1,(10,10)),
+                                                                        ('matrix',2,(10,10)),
+                                                                        ('matrix',3,(10,10)),
+                                                                        ('matrix',4,(10,10))],
+                                              main_topology_name='matrix',
                                               dataset_names=['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht'],
                                               log_scaled_datasets=[],
                                               pop_size=100,
@@ -492,11 +493,11 @@ if __name__ == '__main__':
                                               output_path=output_path,
                                               seed_list=list(range(1, 100 + 1)), 
                                               topologies_radius_shapes=[('tournament',4,(100,)),
-                                                                        ('cube',1,(4,5,5)),
-                                                                        ('cube',2,(4,5,5)),
-                                                                        ('cube',3,(4,5,5)),
-                                                                        ('cube',4,(4,5,5))],
-                                              main_topology_name='cube',
+                                                                        ('matrix',1,(10,10)),
+                                                                        ('matrix',2,(10,10)),
+                                                                        ('matrix',3,(10,10)),
+                                                                        ('matrix',4,(10,10))],
+                                              main_topology_name='matrix',
                                               dataset_names=['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht'],
                                               log_scaled_datasets=['bioav', 'concrete', 'ppb', 'slump', 'toxicity'],
                                               pop_size=100,
@@ -515,11 +516,11 @@ if __name__ == '__main__':
                                               output_path=output_path,
                                               seed_list=list(range(1, 100 + 1)), 
                                               topologies_radius_shapes=[('tournament',4,(100,)),
-                                                                        ('cube',1,(4,5,5)),
-                                                                        ('cube',2,(4,5,5)),
-                                                                        ('cube',3,(4,5,5)),
-                                                                        ('cube',4,(4,5,5))],
-                                              main_topology_name='cube',
+                                                                        ('matrix',1,(10,10)),
+                                                                        ('matrix',2,(10,10)),
+                                                                        ('matrix',3,(10,10)),
+                                                                        ('matrix',4,(10,10))],
+                                              main_topology_name='matrix',
                                               dataset_names=['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht'],
                                               pop_size=100,
                                               num_gen=1000,
@@ -532,7 +533,7 @@ if __name__ == '__main__':
                                               generation_strategy='half',
                                               elitism=True
                                               )
-    '''
+    
 
 
     

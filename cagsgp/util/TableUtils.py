@@ -43,7 +43,7 @@ class TableUtils:
             for seed in seed_list:
                 d: dict[str, Any] = ResultUtils.read_single_json_file(
                     folder_name=folder_name,
-                    result_file_type='res',
+                    result_file_type='b',
                     pop_size=pop_size,
                     num_gen=num_gen,
                     max_depth=max_depth,
@@ -75,7 +75,7 @@ class TableUtils:
                 for seed in seed_list:
                     d: dict[str, Any] = ResultUtils.read_single_json_file(
                         folder_name=folder_name,
-                        result_file_type='res',
+                        result_file_type='b',
                         pop_size=pop_size,
                         num_gen=num_gen,
                         max_depth=max_depth,
@@ -151,7 +151,7 @@ class TableUtils:
             for seed in seed_list:
                 d: dict[str, Any] = ResultUtils.read_single_json_file(
                     folder_name=folder_name,
-                    result_file_type='res',
+                    result_file_type='b',
                     pop_size=pop_size,
                     num_gen=num_gen,
                     max_depth=max_depth,
@@ -182,7 +182,7 @@ class TableUtils:
                 for seed in seed_list:
                     d: dict[str, Any] = ResultUtils.read_single_json_file(
                         folder_name=folder_name,
-                        result_file_type='res',
+                        result_file_type='b',
                         pop_size=pop_size,
                         num_gen=num_gen,
                         max_depth=max_depth,
@@ -229,7 +229,7 @@ if __name__ == '__main__':
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
 
     TableUtils.print_table_wilcoxon_medianrmse_datasets_cellular_vs_tournament_for_single_split_type(folder_name=folder_name,
-                                              split_type='Test',
+                                              split_type='Train',
                                               seed_list=list(range(1, 100 + 1)), 
                                               topologies_radius_shapes=[('line',1,(100,)),
                                                                         ('line',2,(100,)),
