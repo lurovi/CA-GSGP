@@ -270,12 +270,12 @@ def __ca_inspired_gsgp(
                 first: tuple[int, Node, float] = competitors[0]
                 second: tuple[int, Node, float] = competitors[1]
             else:
-                competitors: list[tuple[int, Node, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
-                competitors.sort(key=lambda x: x[2], reverse=False)
-                first: tuple[int, Node, float] = competitors[0]
-                competitors = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
-                competitors.sort(key=lambda x: x[2], reverse=False)
-                second: tuple[int, Node, float] = competitors[0]
+                first_tournament: list[tuple[int, Node, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
+                first_tournament.sort(key=lambda x: x[2], reverse=False)
+                first: tuple[int, Node, float] = first_tournament[0]
+                second_tournament: list[tuple[int, Node, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
+                second_tournament.sort(key=lambda x: x[2], reverse=False)
+                second: tuple[int, Node, float] = second_tournament[0]
             
             parents.append(((first[1], first[2]), (second[1], second[2])))
 
