@@ -1,6 +1,4 @@
 from collections.abc import Callable
-from copy import deepcopy
-from functools import partial
 import itertools
 import time
 from typing import Any
@@ -25,7 +23,6 @@ import numpy as np
 import random
 
 from genepro.node_impl import Constant
-from genepro.util import get_subtree_as_full_list
 
     
 def run_symbolic_regression_with_cellular_automata_gsgp(
@@ -40,16 +37,17 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
     n_constants: int,
     dataset_name: str,
     dataset_path: str,
-    seed: int = None,
-    verbose: bool = False,
-    gen_verbosity_level: int = 1,
-    crossover_probability: float = 0.9,
-    mutation_probability: float = 0.6,
-    m: float = 2.0,
-    duplicates_elimination: str = 'nothing',
-    neighbors_topology: str = 'matrix',
-    radius: int = 1,
-    elitism: bool = True
+    seed: int,
+    verbose: bool,
+    gen_verbosity_level: int,
+    crossover_probability: float,
+    mutation_probability: float,
+    m: float,
+    competitor_rate: float,
+    duplicates_elimination: str,
+    neighbors_topology: str,
+    radius: int,
+    elitism: bool
 ) -> tuple[dict[str, Any], str]:
     
     # ===========================
@@ -130,6 +128,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
         crossover_probability=crossover_probability,
         mutation_probability=mutation_probability,
         m=m,
+        competitor_rate=competitor_rate,
         verbose=verbose,
         gen_verbosity_level=gen_verbosity_level,
         neighbors_topology_factory=neighbors_topology_factory,
@@ -160,6 +159,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
         crossover_probability=crossover_probability,
         mutation_probability=mutation_probability,
         m=m,
+        competitor_rate=competitor_rate,
         execution_time_in_minutes=execution_time_in_minutes,
         neighbors_topology=neighbors_topology,
         radius=radius,
@@ -170,7 +170,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
     
     run_id: str = f"cgsgp-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-neighbors_topology_{neighbors_topology}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(crossover_probability, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-radius_{str(radius)}-pressure_{str(pressure)}-genstrategy_{generation_strategy}-elitism_{str(int(elitism))}-SEED{seed}"
     if verbose:
-        print(f"\nSYMBOLIC TREES RMSE CA-GSGP SOO: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Neighbors Topology {neighbors_topology}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}, Crossover Probability {str(round(crossover_probability, 2))}, Mutation Probability {str(round(mutation_probability, 2))}, M {str(round(m, 2))}, Radius {str(radius)}, Pressure {str(pressure)}, Generation Strategy {generation_strategy}, Elitism {str(int(elitism))}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
+        print(f"\nSYMBOLIC TREES RMSE CA-GSGP SOO: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Neighbors Topology {neighbors_topology}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}, Crossover Probability {str(round(crossover_probability, 2))}, Mutation Probability {str(round(mutation_probability, 2))}, M {str(round(m, 2))}, CompetitorRate {str(round(competitor_rate, 2))}, Radius {str(radius)}, Pressure {str(pressure)}, Generation Strategy {generation_strategy}, Elitism {str(int(elitism))}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
     
     return pareto_front_df, run_id
 
@@ -184,6 +184,7 @@ def __ca_inspired_gsgp(
     crossover_probability: float,
     mutation_probability: float,
     m: float,
+    competitor_rate: float,
     verbose: bool,
     gen_verbosity_level: int,
     neighbors_topology_factory: NeighborsTopologyFactory,
@@ -205,7 +206,7 @@ def __ca_inspired_gsgp(
     # ===========================
 
     # == RESULT, STATISTICS, EVALUATOR, FITNESS, TOPOLOGY COORDINATES ==
-    result: dict[str, Any] = {'best': {}, 'history': [], 'pop_fitness_per_gen': []}
+    result: dict[str, Any] = {'best': {}, 'history': []}
     stats_collector: dict[str, StatsCollectorSingle] = {'train': StatsCollectorSingle(objective_name='RMSE', revert_sign=False),
                                                         'test': StatsCollectorSingle(objective_name='RMSE', revert_sign=False)}
     
@@ -241,7 +242,7 @@ def __ca_inspired_gsgp(
         # FITNESS EVALUATION AND UPDATE
         # ===========================
         
-        tt: tuple[list[float], int] = __fitness_evaluation_and_update_statistics_and_result(
+        tt: tuple[dict[str, list[float]], int] = __fitness_evaluation_and_update_statistics_and_result(
             pop=pop,
             pop_size=pop_size,
             stats_collector=stats_collector,
@@ -252,32 +253,37 @@ def __ca_inspired_gsgp(
             train_set=train_set,
             test_set=test_set
         )
-        fit_values: list[float] = tt[0]
+        fit_values_train: list[float] = tt[0]['train']
+        fit_values_test: list[float] = tt[0]['test']
         index_of_min_value: int = tt[1]
 
         # ===========================
         # SELECTION
         # ===========================
 
-        evaluated_individuals: list[tuple[int, Node, float]] = [(i, pop[i][0], fit_values[i]) for i in range(pop_size)]
-        parents: list[tuple[tuple[Node, float], tuple[Node, float]]] = []
+        evaluated_individuals: list[tuple[int, Node, float, float]] = [(i, pop[i][0], fit_values_train[i], fit_values_test[i]) for i in range(pop_size)]
+        parents: list[tuple[tuple[Node, float, float], tuple[Node, float, float]]] = []
         neighbors_topology: NeighborsTopology = neighbors_topology_factory.create(evaluated_individuals, clone=False)
 
         for coordinate in all_possible_coordinates:
             if not is_tournament_selection:
-                competitors: list[tuple[int, Node, float]] = [neighbors_topology.get(idx_tuple, clone=False) for idx_tuple in all_neighborhoods_indices[coordinate]]
-                competitors.sort(key=lambda x: x[2], reverse=False)
-                first: tuple[int, Node, float] = competitors[0]
-                second: tuple[int, Node, float] = competitors[1]
+                competitors: list[tuple[int, Node, float, float]] = [neighbors_topology.get(idx_tuple, clone=False) for idx_tuple in all_neighborhoods_indices[coordinate]]
+                competitors.sort(key=lambda x: x[0], reverse=False)
+                sampled_competitors: list[tuple[int, Node, float, float]] = [competitor for competitor in competitors if random.random() < competitor_rate]
+                while len(sampled_competitors) < 2:
+                    sampled_competitors.append(competitors[int(random.random()*len(competitors))])
+                sampled_competitors.sort(key=lambda x: x[2], reverse=False)
+                first: tuple[int, Node, float, float] = sampled_competitors[0]
+                second: tuple[int, Node, float, float] = sampled_competitors[1]
             else:
-                first_tournament: list[tuple[int, Node, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
+                first_tournament: list[tuple[int, Node, float, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
                 first_tournament.sort(key=lambda x: x[2], reverse=False)
-                first: tuple[int, Node, float] = first_tournament[0]
-                second_tournament: list[tuple[int, Node, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
+                first: tuple[int, Node, float, float] = first_tournament[0]
+                second_tournament: list[tuple[int, Node, float, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
                 second_tournament.sort(key=lambda x: x[2], reverse=False)
-                second: tuple[int, Node, float] = second_tournament[0]
+                second: tuple[int, Node, float, float] = second_tournament[0]
             
-            parents.append(((first[1], first[2]), (second[1], second[2])))
+            parents.append(((first[1], first[2], first[3]), (second[1], second[2], second[3])))
 
         evaluated_individuals = None
         neighbors_topology = None
@@ -291,19 +297,19 @@ def __ca_inspired_gsgp(
 
         offsprings: list[tuple[Node, dict[str, float]]] = []
         for i, both_trees in enumerate(parents, 0):
-
+            first_parent: tuple[Node, float, float] = both_trees[0]
+            second_parent: tuple[Node, float, float] = both_trees[1]
+            
             if elitism and i == index_of_min_value:
                 # If elitism, preserve the best individual to the next generation
                 offsprings.append(pop[i])
             else:
                 # == CROSSOVER ==
                 if random.random() < crossover_probability:
-                    first_parent: tuple[Node, float] = both_trees[0]
-                    second_parent: tuple[Node, float] = both_trees[1]
                     cx_tree: Node = structure.geometric_semantic_single_tree_crossover(first_parent[0], second_parent[0], enable_caching=True, fix_properties=True)
                     new_tree: tuple[Node, dict[str, float]] = (cx_tree, {})
                 else:
-                    new_tree: tuple[Node, dict[str, float]] = pop[i]
+                    new_tree: tuple[Node, dict[str, float]] = (first_parent[0], {'train': first_parent[1], 'test': first_parent[2]})
 
                 # == MUTATION ==
                 if random.random() < mutation_probability:
@@ -331,7 +337,7 @@ def __ca_inspired_gsgp(
     # LAST FITNESS EVALUATION AND UPDATE
     # ===========================
 
-    tt = __fitness_evaluation_and_update_statistics_and_result(
+    _ = __fitness_evaluation_and_update_statistics_and_result(
             pop=pop,
             pop_size=pop_size,
             stats_collector=stats_collector,
@@ -360,7 +366,7 @@ def __fitness_evaluation_and_update_statistics_and_result(
     result: dict[str, Any],
     train_set: tuple[np.ndarray, np.ndarray],
     test_set: tuple[np.ndarray, np.ndarray],
-) -> tuple[list[float], int]:
+) -> tuple[dict[str, list[float]], int]:
     
     # ===========================
     # FITNESS EVALUATION
@@ -412,7 +418,7 @@ def __fitness_evaluation_and_update_statistics_and_result(
     
     result['history'].append({kk: result['best'][kk] for kk in result['best']})
 
-    return (fit_values_dict['train'], index_of_min_value)
+    return (fit_values_dict, index_of_min_value)
 
 
 def __compute_single_RMSE_value_and_replace(pop: list[tuple[Node, dict[str, float]]], pop_size: int, X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray, y_test: np.ndarray) -> dict[str, list[float]]:

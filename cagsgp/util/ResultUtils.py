@@ -84,6 +84,7 @@ class ResultUtils:
         crossover_probability: float,
         mutation_probability: float,
         m: float,
+        competitor_rate: float,
         execution_time_in_minutes: float,
         neighbors_topology: str,
         radius: int,
@@ -96,7 +97,6 @@ class ResultUtils:
         pareto_front_dict: dict[str, Any] = {"parameters": {},
                                              "best": result['best'],
                                              "history": result['history'],
-                                             "pop_fitness_per_gen": result['pop_fitness_per_gen'],
                                              "train_statistics": result['train_statistics'],
                                              "test_statistics": result['test_statistics']
                                              }
@@ -110,6 +110,7 @@ class ResultUtils:
         pareto_front_dict["parameters"]["CrossoverProbability"] = crossover_probability
         pareto_front_dict["parameters"]["MutationProbability"] = mutation_probability
         pareto_front_dict["parameters"]["m"] = m
+        pareto_front_dict["parameters"]["CompetitorRate"] = competitor_rate
         pareto_front_dict["parameters"]["ExecutionTimeInMinutes"] = execution_time_in_minutes
         pareto_front_dict["parameters"]["NeighborsTopology"] = neighbors_topology
         pareto_front_dict["parameters"]["Radius"] = radius

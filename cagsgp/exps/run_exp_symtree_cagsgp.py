@@ -34,6 +34,7 @@ def run_single_experiment(
         crossover_probability: float,
         mutation_probability: float,
         m: float,
+        competitor_rate: float,
         duplicates_elimination: str,
         elitism: bool,
         start_seed: int,
@@ -62,6 +63,7 @@ def run_single_experiment(
             crossover_probability=crossover_probability,
             mutation_probability=mutation_probability,
             m=m,
+            competitor_rate=competitor_rate,
             duplicates_elimination=duplicates_elimination,
             neighbors_topology=neighbors_topology,
             radius=radius,
@@ -87,6 +89,7 @@ def run_experiment_all_datasets(
         crossover_probability: float,
         mutation_probability: float,
         m: float,
+        competitor_rate: float,
         duplicates_elimination: str,
         elitism: bool,
         start_seed: int,
@@ -98,7 +101,7 @@ def run_experiment_all_datasets(
     if not multiprocess:
         parallelizer: Parallelizer = FakeParallelizer()
     else:
-        parallelizer: Parallelizer = MultiProcessingParallelizer(len(parameters))
+        parallelizer: Parallelizer = MultiProcessingParallelizer(len(parameters) if os.cpu_count() >= len(parameters) else os.cpu_count())
     parallel_func: Callable = partial(run_single_experiment,
                                         folder_name=folder_name,
                                         dataset_path_folder=dataset_path_folder,
@@ -113,6 +116,7 @@ def run_experiment_all_datasets(
                                         crossover_probability=crossover_probability,
                                         mutation_probability=mutation_probability,
                                         m=m,
+                                        competitor_rate=competitor_rate,
                                         duplicates_elimination=duplicates_elimination,
                                         elitism=elitism,
                                         start_seed=start_seed,
@@ -127,14 +131,15 @@ if __name__ == '__main__':
     # Datasets: ['airfoil', 'bioav', 'concrete', 'parkinson', 'ppb', 'slump', 'toxicity', 'vladislavleva-14', 'yacht']
     # Datasets: ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
-    folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
-    #folder_name: str = '/home/luigirovito/python_data/' + 'CA-GSGP/' + 'results_1' + '/'
+    folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1.5_0.4' + '/'
+    #folder_name: str = '/home/luigirovito/python_data/' + 'CA-GSGP/' + 'results_1.5_0.4' + '/'
     dataset_path_folder: str = codebase_folder + 'python_data/CA-GSGP/datasets_csv/'
     #dataset_path_folder: str = '/home/luigirovito/python_data/' + 'CA-GSGP/datasets_csv/'
 
     pop_size: int = 100
     num_gen: int = 1000
     m: float = 0.0
+    competitor_rate: float = 0.40
     max_depth: int = 6
     elitism: bool = True
     generation_strategy: str = 'half'
@@ -155,11 +160,23 @@ if __name__ == '__main__':
         #                   'pop_shape': (pop_size,)})
         #parameters.append({'dataset_name': dataset_name,
         #                   'neighbors_topology': 'tournament',
-        #                   'radius': 5,
+        #                   'radius': 8,
         #                   'pop_shape': (pop_size,)})
         #parameters.append({'dataset_name': dataset_name,
         #                   'neighbors_topology': 'tournament',
-        #                   'radius': 7,
+        #                   'radius': 12,
+        #                   'pop_shape': (pop_size,)})
+        #parameters.append({'dataset_name': dataset_name,
+        #                   'neighbors_topology': 'tournament',
+        #                   'radius': 16,
+        #                   'pop_shape': (pop_size,)})
+        #parameters.append({'dataset_name': dataset_name,
+        #                   'neighbors_topology': 'tournament',
+        #                   'radius': 20,
+        #                   'pop_shape': (pop_size,)})
+        #parameters.append({'dataset_name': dataset_name,
+        #                   'neighbors_topology': 'tournament',
+        #                   'radius': 5,
         #                   'pop_shape': (pop_size,)})
         #parameters.append({'dataset_name': dataset_name,
         #                   'neighbors_topology': 'tournament',
@@ -240,6 +257,7 @@ if __name__ == '__main__':
         crossover_probability=crossover_probability,
         mutation_probability=mutation_probability,
         m=m,
+        competitor_rate=competitor_rate,
         duplicates_elimination=duplicates_elimination,
         elitism=elitism,
         start_seed=1,
