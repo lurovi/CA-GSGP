@@ -120,6 +120,7 @@ class TableUtils:
             folder_name: str,
             split_type: str,
             seed_list: list[int],
+            tournament_pressures: list[int],
             topologies_radius_shapes: list[tuple[str, int, tuple[int, ...]]],
             dataset_names: list[str],
             pop_size: int,
@@ -140,36 +141,36 @@ class TableUtils:
 
         # K1: Method - K2: DatasetName - V: list of best RMSE across all seeds
         fitness: dict[str, dict[str, list[float]]] = {}
-        tournament_pressure: str = str(5)
 
         # ===================
         # Load tournament baseline result
         # ===================
 
-        fitness['Tournament-'+tournament_pressure] = {}
-        for dataset_name in dataset_names:
-            fitness['Tournament-'+tournament_pressure][dataset_name] = []
-            for seed in seed_list:
-                d: dict[str, Any] = ResultUtils.read_single_json_file(
-                    folder_name=folder_name,
-                    result_file_type='b',
-                    pop_size=pop_size,
-                    num_gen=num_gen,
-                    max_depth=max_depth,
-                    neighbors_topology='tournament',
-                    dataset_name=dataset_name,
-                    duplicates_elimination=duplicates_elimination,
-                    pop_shape=(pop_size,),
-                    crossover_probability=crossover_probability,
-                    mutation_probability=mutation_probability,
-                    m=m,
-                    radius=int(tournament_pressure),
-                    generation_strategy=generation_strategy,
-                    elitism=elitism,
-                    seed=seed
-                )
-                best: dict[str, Any] = d['history'][last_gen]
-                fitness['Tournament-'+tournament_pressure][dataset_name].append(best['Fitness'][split_type+' RMSE'])
+        for tournament_pressure in tournament_pressures:
+            fitness['Tournament-'+str(tournament_pressure)] = {}
+            for dataset_name in dataset_names:
+                fitness['Tournament-'+str(tournament_pressure)][dataset_name] = []
+                for seed in seed_list:
+                    d: dict[str, Any] = ResultUtils.read_single_json_file(
+                        folder_name=os.environ['CURRENT_CODEBASE_FOLDER'] + 'python_data/CA-GSGP/' + 'results_1.5_0.4' + '/',
+                        result_file_type='b',
+                        pop_size=pop_size,
+                        num_gen=num_gen,
+                        max_depth=max_depth,
+                        neighbors_topology='tournament',
+                        dataset_name=dataset_name,
+                        duplicates_elimination=duplicates_elimination,
+                        pop_shape=(pop_size,),
+                        crossover_probability=crossover_probability,
+                        mutation_probability=mutation_probability,
+                        m=m,
+                        radius=int(tournament_pressure),
+                        generation_strategy=generation_strategy,
+                        elitism=elitism,
+                        seed=seed
+                    )
+                    best: dict[str, Any] = d['history'][last_gen]
+                    fitness['Tournament-'+str(tournament_pressure)][dataset_name].append(best['Fitness'][split_type+' RMSE'])
     
         # ===================
         # Load other methods
@@ -206,16 +207,26 @@ class TableUtils:
         # Print table content
         # ===================
 
-        for method in ['Tournament-'+tournament_pressure, 'Line-1', 'Line-2', 'Line-3', 'Line-4',
-                        'Matrix-1', 'Matrix-2', 'Matrix-3', 'Matrix-4',
-                        'Cube-1', 'Cube-2']:
-            tab_str += '{' + method + '}' + '\n'
+        for method in ['Tournament-'+str(tournament_pressure) for tournament_pressure in tournament_pressures] + ['Matrix-1', 'Matrix-2', 'Matrix-3', 'Matrix-4', 'Cube-1', 'Cube-2']:
+            tab_str += '{' + method[0] + method[(method.index('-')+1):] + '}' + '\n'
             for dataset_name in ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']:
                 a: list[float] = fitness[method][dataset_name]
-                b: list[float] = fitness['Tournament-'+tournament_pressure][dataset_name]
-                p: float = round(stats.wilcoxon(a, b, alternative="less").pvalue, 2) if a != b else 1.0
-                is_meaningful: bool = p < 0.05
-                tab_str += '& ' + str(round(statistics.median(a), 2)) + ('{\\textbf{*}}' if is_meaningful else '') + ' '
+                tab_str += '& ' + str(round(statistics.median(a), 2))
+                outperformed_pressures: list[int] = []
+                for tournament_pressure in tournament_pressures:
+                    b: list[float] = fitness['Tournament-'+str(tournament_pressure)][dataset_name]
+                    p: float = round(stats.wilcoxon(a, b, alternative="less").pvalue, 2) if a != b else 1.0
+                    is_meaningful: bool = p < 0.05
+                    if is_meaningful:
+                        outperformed_pressures.append(tournament_pressure)
+                if len(outperformed_pressures) > 0:
+                    tab_str += '{$^{\\scalebox{0.55}{'
+                    for outperformed_pressure in outperformed_pressures:
+                        tab_str += '\\textbf{'+ str(outperformed_pressure) +  '},'
+                    tab_str = tab_str[:-1]
+                    tab_str += '}'+'}$}'
+                tab_str += ' '
+            
             tab_str += '\n'
             tab_str += '\\\\'
             tab_str += '\n'
@@ -227,16 +238,13 @@ if __name__ == '__main__':
     # Datasets: ['airfoil', 'bioav', 'concrete', 'parkinson', 'ppb', 'slump', 'toxicity', 'vladislavleva-14', 'yacht']
     # Datasets: ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
-    folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
+    folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_2' + '/'
 
     TableUtils.print_table_wilcoxon_medianrmse_datasets_cellular_vs_tournament_for_single_split_type(folder_name=folder_name,
                                               split_type='Test',
-                                              seed_list=list(range(1, 100 + 1)), 
-                                              topologies_radius_shapes=[('line',1,(100,)),
-                                                                        ('line',2,(100,)),
-                                                                        ('line',3,(100,)),
-                                                                        ('line',4,(100,)),
-                                                                        ('matrix',1,(10,10)),
+                                              seed_list=list(range(1, 100 + 1)),
+                                              tournament_pressures=[4], 
+                                              topologies_radius_shapes=[('matrix',1,(10,10)),
                                                                         ('matrix',2,(10,10)),
                                                                         ('matrix',3,(10,10)),
                                                                         ('matrix',4,(10,10)),

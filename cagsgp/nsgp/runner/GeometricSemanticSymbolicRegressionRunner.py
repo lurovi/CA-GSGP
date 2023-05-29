@@ -231,7 +231,8 @@ def __ca_inspired_gsgp(
     # ===========================
     
     pop: list[tuple[Node, dict[str, float]]] = [(structure.generate_tree(), {}) for _ in range(pop_size)]
-    
+    #tournament_selector_factory: NeighborsTopologyFactory = TournamentTopologyFactory(pressure=4) # NEW LINE S2
+
     # ===========================
     # ITERATIONS
     # ===========================
@@ -269,12 +270,26 @@ def __ca_inspired_gsgp(
             if not is_tournament_selection:
                 competitors: list[tuple[int, Node, float, float]] = [neighbors_topology.get(idx_tuple, clone=False) for idx_tuple in all_neighborhoods_indices[coordinate]]
                 competitors.sort(key=lambda x: x[0], reverse=False)
-                sampled_competitors: list[tuple[int, Node, float, float]] = [competitor for competitor in competitors if random.random() < competitor_rate]
+                
+                # S1.5
+                if competitor_rate == 1.0:
+                    sampled_competitors: list[tuple[int, Node, float, float]] = competitors
+                else:
+                    sampled_competitors: list[tuple[int, Node, float, float]] = [competitor for competitor in competitors if random.random() < competitor_rate]
                 while len(sampled_competitors) < 2:
                     sampled_competitors.append(competitors[int(random.random()*len(competitors))])
                 sampled_competitors.sort(key=lambda x: x[2], reverse=False)
                 first: tuple[int, Node, float, float] = sampled_competitors[0]
                 second: tuple[int, Node, float, float] = sampled_competitors[1]
+                
+                # S2
+                #first_tournament: list[tuple[int, Node, float, float]] = tournament_selector_factory.create(competitors, clone=False).neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)# NEW LINE S2
+                #first_tournament.sort(key=lambda x: x[2], reverse=False) # NEW LINE S2
+                #first: tuple[int, Node, float, float] = first_tournament[0] # NEW LINE S2
+                #second_tournament: list[tuple[int, Node, float, float]]=tournament_selector_factory.create(competitors, clone=False).neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)# NEW LINE S2
+                #second_tournament.sort(key=lambda x: x[2], reverse=False) # NEW LINE S2
+                #second: tuple[int, Node, float, float] = second_tournament[0] # NEW LINE S2
+
             else:
                 first_tournament: list[tuple[int, Node, float, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
                 first_tournament.sort(key=lambda x: x[2], reverse=False)
