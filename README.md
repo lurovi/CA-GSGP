@@ -2,4 +2,4 @@
 
 Python 3.10
 
-genepro -> https://github.com/giorgia-nadizar/genepro/  -> develop branch
+genepro -> https://github.com/giorgia-nadizar/genepro/
