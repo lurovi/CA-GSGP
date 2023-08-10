@@ -198,46 +198,46 @@ if __name__ == '__main__':
         #                   'neighbors_topology': 'tournament',
         #                   'radius': 30,
         #                   'pop_shape': (pop_size,)})
-        parameters.append({'dataset_name': dataset_name,
-                            'neighbors_topology': 'line',
-                            'radius': 1,
-                            'pop_shape': (100,)})
-        parameters.append({'dataset_name': dataset_name,
-                           'neighbors_topology': 'line',
-                           'radius': 2,
-                           'pop_shape': (100,)})
-        parameters.append({'dataset_name': dataset_name,
-                            'neighbors_topology': 'line',
-                            'radius': 3,
-                            'pop_shape': (100,)})
-        parameters.append({'dataset_name': dataset_name,
-                            'neighbors_topology': 'line',
-                            'radius': 4,
-                            'pop_shape': (100,)})
-        parameters.append({'dataset_name': dataset_name,
-                            'neighbors_topology': 'matrix',
-                            'radius': 1,
-                            'pop_shape': (10,10)})
+        # parameters.append({'dataset_name': dataset_name,
+        #                     'neighbors_topology': 'line',
+        #                     'radius': 1,
+        #                     'pop_shape': (100,)})
+        # parameters.append({'dataset_name': dataset_name,
+        #                    'neighbors_topology': 'line',
+        #                    'radius': 2,
+        #                    'pop_shape': (100,)})
+        # parameters.append({'dataset_name': dataset_name,
+        #                     'neighbors_topology': 'line',
+        #                     'radius': 3,
+        #                     'pop_shape': (100,)})
+        # parameters.append({'dataset_name': dataset_name,
+        #                     'neighbors_topology': 'line',
+        #                     'radius': 4,
+        #                     'pop_shape': (100,)})
+        # parameters.append({'dataset_name': dataset_name,
+        #                     'neighbors_topology': 'matrix',
+        #                     'radius': 1,
+        #                     'pop_shape': (10,10)})
         parameters.append({'dataset_name': dataset_name,
                            'neighbors_topology': 'matrix',
                            'radius': 2,
                            'pop_shape': (10,10)})
-        parameters.append({'dataset_name': dataset_name,
-                            'neighbors_topology': 'matrix',
-                            'radius': 3,
-                            'pop_shape': (10,10)})
-        parameters.append({'dataset_name': dataset_name,
-                            'neighbors_topology': 'matrix',
-                            'radius': 4,
-                            'pop_shape': (10,10)})
-        parameters.append({'dataset_name': dataset_name,
-                            'neighbors_topology': 'cube',
-                            'radius': 1,
-                            'pop_shape': (4,5,5)})
-        parameters.append({'dataset_name': dataset_name,
-                           'neighbors_topology': 'cube',
-                           'radius': 2,
-                           'pop_shape': (4,5,5)})
+        # parameters.append({'dataset_name': dataset_name,
+        #                     'neighbors_topology': 'matrix',
+        #                     'radius': 3,
+        #                     'pop_shape': (10,10)})
+        # parameters.append({'dataset_name': dataset_name,
+        #                     'neighbors_topology': 'matrix',
+        #                     'radius': 4,
+        #                     'pop_shape': (10,10)})
+        # parameters.append({'dataset_name': dataset_name,
+        #                     'neighbors_topology': 'cube',
+        #                     'radius': 1,
+        #                     'pop_shape': (4,5,5)})
+        # parameters.append({'dataset_name': dataset_name,
+        #                    'neighbors_topology': 'cube',
+        #                    'radius': 2,
+        #                    'pop_shape': (4,5,5)})
     
 
     start_time: float = time.time()
@@ -261,9 +261,9 @@ if __name__ == '__main__':
         duplicates_elimination=duplicates_elimination,
         elitism=elitism,
         start_seed=1,
-        end_seed=100,
+        end_seed=1,
         gen_verbosity_level=num_gen,
-        multiprocess=True,
+        multiprocess=False,
         verbose=True
     )
 

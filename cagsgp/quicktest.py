@@ -22,7 +22,7 @@ if __name__ == '__main__':
     pvals = [.01, 0, 0, 0.02]
 
     # Create a list of the adjusted p-values
-    reject_bonferroni, pvals_corrected_bonferroni, _, _  = multipletests(pvals, alpha=.05, method='bonferroni')
+    reject_bonferroni, pvals_corrected_bonferroni, _, _  = multipletests(pvals, alpha=.05, method='holm')
     
     # Print the resulting conclusions
     print(np.sum(reject_bonferroni))

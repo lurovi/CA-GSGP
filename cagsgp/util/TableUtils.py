@@ -124,6 +124,7 @@ class TableUtils:
             seed_list: list[int],
             tournament_pressures: list[int],
             bonferroni_correction: bool,
+            wilcoxon_only_with_baseline: bool,
             topologies_radius_shapes: list[tuple[str, int, tuple[int, ...]]],
             dataset_names: list[str],
             pop_size: int,
@@ -212,60 +213,63 @@ class TableUtils:
 
         all_methods: list[str] = ['Tournament-'+str(tournament_pressure) for tournament_pressure in tournament_pressures]
         if len(topologies_radius_shapes) > 0:
-            all_methods = all_methods + ['Matrix-1', 'Matrix-2', 'Matrix-3', 'Matrix-4', 'Cube-1', 'Cube-2']
+            all_methods = all_methods + ['Matrix-1', 'Matrix-2', 'Matrix-3', 'Matrix-4']
         
         for method in all_methods:
-            tab_str += '{' + method[0] + method[(method.index('-')+1):] + '}' + '\n'
+            id_letter: str = method[0]
+            radius_letter: str = method[(method.index('-')+1):]
+            name_letter: str = method[:method.index('-')]
+            tab_str += '{' + id_letter + radius_letter + '}' + '\n'
             
             for dataset_name in ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']:
                 a: list[float] = fitness[method][dataset_name]
-                outperformed_pressures: list[int] = []
+                outperformed_methods: list[int] = []
                 all_p_values: list[float] = []
-                
-                for tournament_pressure in tournament_pressures:
-                    b: list[float] = fitness['Tournament-'+str(tournament_pressure)][dataset_name]
+                is_the_wilcoxon_test_meaningful: bool = False
+
+                for method_2 in [mmm for mmm in all_methods if mmm != method]:
+                    id_letter_2: str = method_2[0]
+                    radius_letter_2: str = method_2[(method_2.index('-')+1):]
+                    name_letter_2: str = method_2[:method_2.index('-')]
+
+                    b: list[float] = fitness[method_2][dataset_name]
                     p: float = round(stats.wilcoxon(a, b, alternative="less").pvalue, 2) if a != b else 1.0
-                    if not (method.startswith('Tournament-') and int(method[(method.index('-')+1):]) == tournament_pressure):
-                        all_p_values.append(p)
+
+                    all_p_values.append(p)
                     is_meaningful: bool = p < 0.05
                     if is_meaningful:
-                        outperformed_pressures.append(tournament_pressure)
+                        outperformed_methods.append(int(radius_letter_2))
+                        if method_2 == 'Tournament-4':
+                            is_the_wilcoxon_test_meaningful = True
                 
-                if bonferroni_correction:
-                    if len(outperformed_pressures) > 0 and len(tournament_pressures) == 1:
-                        tab_str += '& ' + str(round(statistics.median(a), 2))
+                if wilcoxon_only_with_baseline:
+                    tab_str += '& ' + str(round(statistics.median(a), 2))
+                    if is_the_wilcoxon_test_meaningful:
                         tab_str += '{$^{\\scalebox{0.90}{'
-                        for outperformed_pressure in outperformed_pressures:
-                            tab_str += '\\textbf{'+ '*' +  '},'
+                        tab_str += '\\textbf{'+ '*' +  '},'
                         tab_str = tab_str[:-1]
                         tab_str += '}'+'}$}'
-                    else:
-                        reject_bonferroni, pvals_corrected_bonferroni, _, _ = multipletests(all_p_values, alpha=0.05, method='bonferroni')
+                else:
+                    if bonferroni_correction:
+                        reject_bonferroni, pvals_corrected_bonferroni, _, _ = multipletests(all_p_values, alpha=0.05, method='holm')
                         is_meaningful_bonferroni: bool = np.sum(reject_bonferroni) == len(all_p_values)
-                        tab_str += '& ' + str(round(statistics.median(a), 2))
+                        
+                        tab_str += '& ' + ('\\bfseries ' if is_the_wilcoxon_test_meaningful else '') + str(round(statistics.median(a), 2))
                         if is_meaningful_bonferroni:
                             tab_str += '{$^{\\scalebox{0.90}{'
                             tab_str += '\\textbf{'+ '*' +  '},'
                             tab_str = tab_str[:-1]
                             tab_str += '}'+'}$}'
-                else:
-                    if len(outperformed_pressures) > 0:
-                        if len(tournament_pressures) == 1:
+                    
+                    else:
+                        if len(outperformed_methods) == len(all_methods) - 1:
                             tab_str += '& ' + str(round(statistics.median(a), 2))
                             tab_str += '{$^{\\scalebox{0.90}{'
-                            for outperformed_pressure in outperformed_pressures:
-                                tab_str += '\\textbf{'+ '*' +  '},'
+                            tab_str += '\\textbf{'+ '*' +  '},'
                             tab_str = tab_str[:-1]
                             tab_str += '}'+'}$}'
                         else:
                             tab_str += '& ' + str(round(statistics.median(a), 2))
-                            tab_str += '{$^{\\scalebox{0.55}{'
-                            for outperformed_pressure in outperformed_pressures:
-                                tab_str += '\\textbf{'+ str(outperformed_pressure) +  '},'
-                            tab_str = tab_str[:-1]
-                            tab_str += '}'+'}$}'
-                    else:
-                        tab_str += '& ' + str(round(statistics.median(a), 2))
                 
                 tab_str += ' '
             
@@ -286,15 +290,14 @@ if __name__ == '__main__':
     TableUtils.print_table_wilcoxon_medianrmse_datasets_cellular_vs_tournament_for_single_split_type(folder_name=folder_name,
                                               split_type='Test',
                                               seed_list=list(range(1, 100 + 1)),
-                                              tournament_pressures=[4, 8, 12, 16, 20],
+                                              tournament_pressures=[4],
                                               bonferroni_correction=True,
+                                              wilcoxon_only_with_baseline=False,
                                               #topologies_radius_shapes=[],
                                               topologies_radius_shapes=[('matrix',1,(10,10)),
                                                                         ('matrix',2,(10,10)),
                                                                         ('matrix',3,(10,10)),
-                                                                        ('matrix',4,(10,10)),
-                                                                        ('cube',1,(4,5,5)),
-                                                                        ('cube',2,(4,5,5))],
+                                                                        ('matrix',4,(10,10))],
                                               dataset_names=['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht'],
                                               pop_size=100,
                                               num_gen=1000,

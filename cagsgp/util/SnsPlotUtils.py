@@ -47,7 +47,7 @@ class SnsPlotUtils:
                                           'Best RMSE': []}
             
             title: str = StringUtils.only_first_char_upper(dataset_name) + ' Median Best RMSE'
-            file_name: str = 'lineplot'+'-'+dataset_name+'-'+main_topology_name+'.png'
+            file_name: str = 'lineplot'+'-'+dataset_name+'-'+main_topology_name+'.svg'
 
             for topology, radius, shape in topologies_radius_shapes:
                 for seed in seed_list:
@@ -92,7 +92,7 @@ class SnsPlotUtils:
             plt.legend(fontsize='small', title_fontsize='small')
             if log_scale_y:
                 plt.yscale('log')
-            plt.savefig(output_path+file_name)
+            plt.savefig(output_path+file_name, format='svg')
             # plt.show()
             plt.clf()
             plt.cla()
@@ -126,7 +126,7 @@ class SnsPlotUtils:
                                           'Best RMSE': []}
             
             title: str = StringUtils.only_first_char_upper(dataset_name) + ' Best RMSE'
-            file_name: str = 'boxplot'+'-'+dataset_name+'-'+main_topology_name+'.png'
+            file_name: str = 'boxplot'+'-'+dataset_name+'-'+main_topology_name+'.svg'
 
             for topology, radius, shape in topologies_radius_shapes:
                 for seed in seed_list:
@@ -168,7 +168,7 @@ class SnsPlotUtils:
             plt.legend(fontsize='small', title_fontsize='small')
             if log_scale_y:
                 plt.yscale('log')
-            plt.savefig(output_path+file_name)
+            plt.savefig(output_path+file_name, format='svg')
             # plt.show()
             plt.clf()
             plt.cla()
@@ -203,7 +203,7 @@ class SnsPlotUtils:
                 fitness: dict[str, list[float]] = {}
                 
                 title: str = StringUtils.only_first_char_upper(dataset_name) + ' Wilcoxon Test on Best RMSE (' + split_type + ')'
-                file_name: str = 'heatmap-wilcoxon'+'-'+split_type+'-'+dataset_name+'-'+main_topology_name+'.png'
+                file_name: str = 'heatmap-wilcoxon'+'-'+split_type+'-'+dataset_name+'-'+main_topology_name+'.svg'
 
                 for topology, radius, shape in topologies_radius_shapes:
                     name: str = StringUtils.only_first_char_upper(topology)+'-'+str(radius)
@@ -249,7 +249,7 @@ class SnsPlotUtils:
                 g = sns.heatmap(data=data, annot=True, fmt='.2f', cmap='flare', cbar_kws={'label': 'p-value'})
                 plt.title(title)
                 #plt.legend(fontsize='small', title_fontsize='small')
-                plt.savefig(output_path+file_name)
+                plt.savefig(output_path+file_name, format='svg')
                 # plt.show()
                 plt.clf()
                 plt.cla()
@@ -285,7 +285,7 @@ class SnsPlotUtils:
                                           'Best RMSE': []}
             
             title: str = StringUtils.only_first_char_upper(dataset_name) + ' ' + split_type + ' Median Best RMSE'
-            file_name: str = 'lineplot'+'-'+split_type+'-'+dataset_name+'-'+main_topology_name+'.png'
+            file_name: str = 'lineplot'+'-'+split_type+'-'+dataset_name+'-'+main_topology_name+'.svg'
 
             for topology, radius, shape in topologies_radius_shapes:
                 for seed in seed_list:
@@ -324,7 +324,7 @@ class SnsPlotUtils:
             plt.legend(fontsize='small', title_fontsize='small')
             if log_scale_y:
                 plt.yscale('log')
-            plt.savefig(output_path+file_name)
+            plt.savefig(output_path+file_name, format='svg')
             # plt.show()
             plt.clf()
             plt.cla()
@@ -360,7 +360,7 @@ class SnsPlotUtils:
                                           'Best RMSE': []}
 
             title: str = StringUtils.only_first_char_upper(dataset_name) + ' ' + split_type + ' Best RMSE'
-            file_name: str = 'boxplot'+'-'+split_type+'-'+dataset_name+'-'+main_topology_name+'.png'
+            file_name: str = 'boxplot'+'-'+split_type+'-'+dataset_name+'-'+main_topology_name+'.svg'
 
             for topology, radius, shape in topologies_radius_shapes:
                 for seed in seed_list:
@@ -398,7 +398,7 @@ class SnsPlotUtils:
             #plt.legend(fontsize='small', title_fontsize='small')
             if log_scale_y:
                 plt.yscale('log')
-            plt.savefig(output_path+file_name)
+            plt.savefig(output_path+file_name, format='svg')
             # plt.show()
             plt.clf()
             plt.cla()
