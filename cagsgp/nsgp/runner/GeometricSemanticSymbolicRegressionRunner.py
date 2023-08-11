@@ -6,6 +6,7 @@ from typing import Any
 from numpy.random import Generator
 from prettytable import PrettyTable
 from cagsgp.benchmark.DatasetGenerator import DatasetGenerator
+from cagsgp.nsgp.stat.SemanticDistance import SemanticDistance
 
 from cagsgp.nsgp.stat.StatsCollectorSingle import StatsCollectorSingle
 from cagsgp.nsgp.structure.NeighborsTopology import NeighborsTopology
@@ -449,7 +450,14 @@ def __fitness_evaluation_and_update_statistics_and_result(
         if best_ind_here_totally['Fitness']['Train RMSE'] < result['best']['Fitness']['Train RMSE']:
             result['best'] = best_ind_here_totally
     
-    result['history'].append({kk: result['best'][kk] for kk in result['best']})
+    result['history'].append(
+        {kk: result['best'][kk] for kk in result['best']}
+        |
+        {   
+            'PopMultiDistance': SemanticDistance.compute_multi_euclidean_distance_from_list(semantic_vectors),
+            'BestDistanceStats': SemanticDistance.compute_stats(SemanticDistance.compute_distances_between_vector_at_index_and_rest_of_the_list(idx=index_of_min_value, vectors=semantic_vectors))
+        }
+    )
 
     return (fit_values_dict, index_of_min_value)
 
