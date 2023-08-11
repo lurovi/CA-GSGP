@@ -17,22 +17,24 @@ class StatsCollectorSingle:
         da: list[float] = [-val for val in data] if self.__revert_sign else data
         da: np.ndarray = np.array(da, dtype=np.float32)
         
-        #sum_da: float = float(np.sum(da))
         mean_da: float = float(np.mean(da))
-        #max_da: float = float(np.amax(da))
+        max_da: float = float(np.amax(da))
         min_da: float = float(np.amin(da))
         median_da: float = float(np.median(da))
         var_da: float = float(np.var(da))
+        q1_da: float = float(np.percentile(da, 25))
+        q3_da: float = float(np.percentile(da, 75))
         
         d: dict[str, float] = {
                                "mean": mean_da,
                                "median": median_da,
                                "min": min_da,
-                               #"max": max_da,
-                               #"sum": sum_da,
-                               "var": var_da
-                               #"count": da.shape[0]
+                               "max": max_da,
+                               "var": var_da,
+                               "q1": q1_da,
+                               "q3": q3_da
                               }
+        
         self.__data[n_gen] = d
 
     def get_fitness_stat(self, n_gen: int, stat: str) -> float:
