@@ -85,8 +85,9 @@ class ResultUtils:
         mutation_probability: float,
         m: float,
         competitor_rate: float,
+        expl_pipe: str,
         execution_time_in_minutes: float,
-        neighbors_topology: str,
+        torus_dim: int,
         radius: int,
         elitism: bool,
         dataset_name: str,
@@ -111,8 +112,9 @@ class ResultUtils:
         pareto_front_dict["parameters"]["MutationProbability"] = mutation_probability
         pareto_front_dict["parameters"]["m"] = m
         pareto_front_dict["parameters"]["CompetitorRate"] = competitor_rate
+        pareto_front_dict["parameters"]["ExplPipe"] = expl_pipe
         pareto_front_dict["parameters"]["ExecutionTimeInMinutes"] = execution_time_in_minutes
-        pareto_front_dict["parameters"]["NeighborsTopology"] = neighbors_topology
+        pareto_front_dict["parameters"]["TorusDim"] = torus_dim
         pareto_front_dict["parameters"]["Radius"] = radius
         pareto_front_dict["parameters"]["Elitism"] = int(elitism)
         pareto_front_dict["parameters"]["Dataset"] = dataset_name
@@ -125,15 +127,15 @@ class ResultUtils:
         return pareto_front_dict
 
     @staticmethod
-    def write_result_to_json(path: str, run_id: str, pareto_front_dict: dict[str, Any]) -> None:
+    def write_result_to_json(path: str, path_run_id: str, run_id: str, pareto_front_dict: dict[str, Any]) -> None:
         d: dict[str, Any] = {k: pareto_front_dict[k] for k in pareto_front_dict}
-        with open(path + "tr" + run_id + ".json", "w") as outfile:
+        with open(path + path_run_id + "tr" + run_id + ".json", "w") as outfile:
             json.dump({"train_statistics": d['train_statistics']}, outfile)
-        with open(path + "te" + run_id + ".json", "w") as outfile:
+        with open(path + path_run_id + "te" + run_id + ".json", "w") as outfile:
             json.dump({"test_statistics": d['test_statistics']}, outfile)
         del d['train_statistics']
         del d['test_statistics']
-        with open(path + "b" + run_id + ".json", "w") as outfile:
+        with open(path + path_run_id + "b" + run_id + ".json", "w") as outfile:
             json.dump(d, outfile)
 
     @staticmethod
@@ -143,8 +145,10 @@ class ResultUtils:
         pop_size: int,
         num_gen: int,
         max_depth: int,
-        neighbors_topology: str,
+        torus_dim: int,
         dataset_name: str,
+        competitor_rate: float,
+        expl_pipe: str,
         duplicates_elimination: str,
         pop_shape: tuple[int, ...],
         crossover_probability: float,
@@ -159,15 +163,17 @@ class ResultUtils:
         pop_shape_str: str = 'x'.join([str(n) for n in pop_shape])
         crossprob: str = str(round(crossover_probability, 2))
         mutprob: str = str(round(mutation_probability, 2))
+        cmprate: str = str(round(competitor_rate, 2)) if torus_dim != 0 else str(0.0)
         m_str: str = str(round(m, 2))
-        pressure_str: str = str(radius) if neighbors_topology == 'tournament' else str((2*radius + 1)**len(pop_shape))
-        radius_str: str = str(radius) if neighbors_topology != 'tournament' else str(0)
+        pressure_str: str = str(radius) if torus_dim == 0 else str((2*radius + 1)**len(pop_shape))
+        radius_str: str = str(radius) if torus_dim != 0 else str(0)
         elitism_str: str = str(int(elitism))
         seed_str: str = str(seed)
+        
+        path_run_id: str = f'cmprate{cmprate}/{expl_pipe}/'
+        run_id: str = f"cgsgp-popsize_{str(pop_size)}-numgen_{str(num_gen)}-maxdepth_{str(max_depth)}-torus_dim_{str(torus_dim)}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{pop_shape_str}-crossprob_{crossprob}-mutprob_{mutprob}-m_{m_str}-radius_{radius_str}-pressure_{pressure_str}-genstrategy_{generation_strategy}-elitism_{elitism_str}-SEED{seed_str}"
 
-        run_id: str = f"cgsgp-popsize_{str(pop_size)}-numgen_{str(num_gen)}-maxdepth_{str(max_depth)}-neighbors_topology_{neighbors_topology}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{pop_shape_str}-crossprob_{crossprob}-mutprob_{mutprob}-m_{m_str}-radius_{radius_str}-pressure_{pressure_str}-genstrategy_{generation_strategy}-elitism_{elitism_str}-SEED{seed_str}"
-
-        with open(folder_name + result_file_type + run_id + '.json', 'r') as f:
+        with open(folder_name + path_run_id + result_file_type + run_id + '.json', 'r') as f:
             data: dict[str, Any] = json.load(f)
 
         return data

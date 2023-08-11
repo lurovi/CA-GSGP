@@ -20,10 +20,10 @@ def run_single_experiment(
         folder_name: str,
         dataset_name: str,
         dataset_path_folder: str,
-        neighbors_topology: str,
+        torus_dim: int,
         radius: int,
+        pop_shape: tuple[int, ...],
         pop_size: int,
-        pop_shape: int,
         num_gen: int,
         max_depth: int,
         generation_strategy: str,
@@ -35,6 +35,7 @@ def run_single_experiment(
         mutation_probability: float,
         m: float,
         competitor_rate: float,
+        expl_pipe: str,
         duplicates_elimination: str,
         elitism: bool,
         start_seed: int,
@@ -45,9 +46,9 @@ def run_single_experiment(
     
     dataset_path = dataset_path_folder + dataset_name + '/'
     for seed in range(start_seed, end_seed + 1):
-        t: tuple[dict[str, Any], str] = run_symbolic_regression_with_cellular_automata_gsgp(
-            pop_size=pop_size,
+        t: tuple[dict[str, Any], str, str] = run_symbolic_regression_with_cellular_automata_gsgp(
             pop_shape=pop_shape,
+            pop_size=pop_size,
             num_gen=num_gen,
             max_depth=max_depth,
             generation_strategy=generation_strategy,
@@ -64,82 +65,31 @@ def run_single_experiment(
             mutation_probability=mutation_probability,
             m=m,
             competitor_rate=competitor_rate,
+            expl_pipe=expl_pipe,
             duplicates_elimination=duplicates_elimination,
-            neighbors_topology=neighbors_topology,
+            torus_dim=torus_dim,
             radius=radius,
             elitism=elitism
         )
-        ResultUtils.write_result_to_json(path=folder_name, run_id=t[1], pareto_front_dict=t[0])
+        ResultUtils.write_result_to_json(path=folder_name, path_run_id=t[1], run_id=t[2], pareto_front_dict=t[0])
     
-    print(f'Dataset {dataset_name} Radius {radius} NeighborsTopology {neighbors_topology} COMPLETED')
-
-
-def run_experiment_all_datasets(
-        folder_name: str,
-        parameters: list[dict[str, Any]],
-        dataset_path_folder: str,
-        pop_size: int,
-        num_gen: int,
-        max_depth: int,
-        generation_strategy: str,
-        operators: list[Node],
-        low_erc: float,
-        high_erc: float,
-        n_constants: int,
-        crossover_probability: float,
-        mutation_probability: float,
-        m: float,
-        competitor_rate: float,
-        duplicates_elimination: str,
-        elitism: bool,
-        start_seed: int,
-        end_seed: int,
-        gen_verbosity_level: int,
-        multiprocess: bool,
-        verbose: bool
-) -> None:
-    if not multiprocess:
-        parallelizer: Parallelizer = FakeParallelizer()
-    else:
-        parallelizer: Parallelizer = MultiProcessingParallelizer(len(parameters) if os.cpu_count() >= len(parameters) else os.cpu_count())
-    parallel_func: Callable = partial(run_single_experiment,
-                                        folder_name=folder_name,
-                                        dataset_path_folder=dataset_path_folder,
-                                        pop_size=pop_size,
-                                        num_gen=num_gen,
-                                        max_depth=max_depth,
-                                        generation_strategy=generation_strategy,
-                                        operators=operators,
-                                        low_erc=low_erc,
-                                        high_erc=high_erc,
-                                        n_constants=n_constants,
-                                        crossover_probability=crossover_probability,
-                                        mutation_probability=mutation_probability,
-                                        m=m,
-                                        competitor_rate=competitor_rate,
-                                        duplicates_elimination=duplicates_elimination,
-                                        elitism=elitism,
-                                        start_seed=start_seed,
-                                        end_seed=end_seed,
-                                        gen_verbosity_level=gen_verbosity_level,
-                                        verbose=verbose
-                                    )
-    _ = parallelizer.parallelize(parallel_func, parameters=parameters)
+    print(f'PopSize {pop_size} NumGen {num_gen} ExplPipe {expl_pipe} Dataset {dataset_name} Radius {radius} TorusDim {torus_dim} CompetitorRate {competitor_rate} COMPLETED')
 
 
 if __name__ == '__main__':
-    # Datasets: ['airfoil', 'bioav', 'concrete', 'parkinson', 'ppb', 'slump', 'toxicity', 'vladislavleva-14', 'yacht']
-    # Datasets: ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']
+    # Datasets: ['airfoil', 'keijzer6', 'concrete', 'vladislavleva14', 'slump', 'toxicity', 'yacht', 'parkinson']
+    # Datasets: ['airfoil', 'keijzer6', 'concrete', 'vladislavleva14', 'slump', 'toxicity', 'yacht']
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
-    folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1.5_0.4' + '/'
-    #folder_name: str = '/home/luigirovito/python_data/' + 'CA-GSGP/' + 'results_1.5_0.4' + '/'
+    folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
+    #folder_name: str = '/home/luigirovito/python_data/' + 'CA-GSGP/' + 'results_1' + '/'
     dataset_path_folder: str = codebase_folder + 'python_data/CA-GSGP/datasets_csv/'
     #dataset_path_folder: str = '/home/luigirovito/python_data/' + 'CA-GSGP/datasets_csv/'
 
-    pop_size: int = 100
-    num_gen: int = 1000
+    # ===========================
+    # COMMON AND FIXED PARAMETERS
+    # ===========================
+
     m: float = 0.0
-    competitor_rate: float = 0.40
     max_depth: int = 6
     elitism: bool = True
     generation_strategy: str = 'half'
@@ -152,120 +102,94 @@ if __name__ == '__main__':
     high_erc: float = 100.0 + 1e-8
     n_constants: int = 100
 
+    # ===========================
+    # VARIABLE PARAMETERS
+    # ===========================
+
     parameters: list[dict[str, Any]] = []
-    for dataset_name in ['airfoil', 'bioav', 'concrete', 'ppb', 'slump', 'toxicity', 'yacht']:
-        #parameters.append({'dataset_name': dataset_name,
-        #                   'neighbors_topology': 'tournament',
-        #                   'radius': 4,
-        #                   'pop_shape': (pop_size,)})
-        #parameters.append({'dataset_name': dataset_name,
-        #                   'neighbors_topology': 'tournament',
-        #                   'radius': 8,
-        #                   'pop_shape': (pop_size,)})
-        #parameters.append({'dataset_name': dataset_name,
-        #                   'neighbors_topology': 'tournament',
-        #                   'radius': 12,
-        #                   'pop_shape': (pop_size,)})
-        #parameters.append({'dataset_name': dataset_name,
-        #                   'neighbors_topology': 'tournament',
-        #                   'radius': 16,
-        #                   'pop_shape': (pop_size,)})
-        #parameters.append({'dataset_name': dataset_name,
-        #                   'neighbors_topology': 'tournament',
-        #                   'radius': 20,
-        #                   'pop_shape': (pop_size,)})
-        #parameters.append({'dataset_name': dataset_name,
-        #                   'neighbors_topology': 'tournament',
-        #                   'radius': 5,
-        #                   'pop_shape': (pop_size,)})
-        #parameters.append({'dataset_name': dataset_name,
-        #                   'neighbors_topology': 'tournament',
-        #                   'radius': 10,
-        #                   'pop_shape': (pop_size,)})
-        #parameters.append({'dataset_name': dataset_name,
-        #                   'neighbors_topology': 'tournament',
-        #                   'radius': 15,
-        #                   'pop_shape': (pop_size,)})
-        #parameters.append({'dataset_name': dataset_name,
-        #                   'neighbors_topology': 'tournament',
-        #                   'radius': 20,
-        #                   'pop_shape': (pop_size,)})
-        #parameters.append({'dataset_name': dataset_name,
-        #                   'neighbors_topology': 'tournament',
-        #                   'radius': 25,
-        #                   'pop_shape': (pop_size,)})
-        #parameters.append({'dataset_name': dataset_name,
-        #                   'neighbors_topology': 'tournament',
-        #                   'radius': 30,
-        #                   'pop_shape': (pop_size,)})
-        # parameters.append({'dataset_name': dataset_name,
-        #                     'neighbors_topology': 'line',
-        #                     'radius': 1,
-        #                     'pop_shape': (100,)})
-        # parameters.append({'dataset_name': dataset_name,
-        #                    'neighbors_topology': 'line',
-        #                    'radius': 2,
-        #                    'pop_shape': (100,)})
-        # parameters.append({'dataset_name': dataset_name,
-        #                     'neighbors_topology': 'line',
-        #                     'radius': 3,
-        #                     'pop_shape': (100,)})
-        # parameters.append({'dataset_name': dataset_name,
-        #                     'neighbors_topology': 'line',
-        #                     'radius': 4,
-        #                     'pop_shape': (100,)})
-        # parameters.append({'dataset_name': dataset_name,
-        #                     'neighbors_topology': 'matrix',
-        #                     'radius': 1,
-        #                     'pop_shape': (10,10)})
-        parameters.append({'dataset_name': dataset_name,
-                           'neighbors_topology': 'matrix',
-                           'radius': 2,
-                           'pop_shape': (10,10)})
-        # parameters.append({'dataset_name': dataset_name,
-        #                     'neighbors_topology': 'matrix',
-        #                     'radius': 3,
-        #                     'pop_shape': (10,10)})
-        # parameters.append({'dataset_name': dataset_name,
-        #                     'neighbors_topology': 'matrix',
-        #                     'radius': 4,
-        #                     'pop_shape': (10,10)})
-        # parameters.append({'dataset_name': dataset_name,
-        #                     'neighbors_topology': 'cube',
-        #                     'radius': 1,
-        #                     'pop_shape': (4,5,5)})
-        # parameters.append({'dataset_name': dataset_name,
-        #                    'neighbors_topology': 'cube',
-        #                    'radius': 2,
-        #                    'pop_shape': (4,5,5)})
+
+    for pop_size, num_gen in [(100, 500), (400, 125), (625, 80)]:
+        for expl_pipe in ['crossmut', 'crossonly', 'mutonly']:
+            for dataset_name in ['airfoil', 'keijzer6', 'concrete', 'vladislavleva14', 'slump', 'toxicity', 'yacht']:
+                for torus_dim in [0, 2]:
+                    if torus_dim == 0:
+                        parameters.append({'dataset_name': dataset_name,
+                                           'torus_dim': torus_dim,
+                                           'radius': 4,
+                                           'pop_shape': (pop_size,),
+                                           'pop_size': pop_size,
+                                           'num_gen': num_gen,
+                                           'competitor_rate': 0.0,
+                                           'expl_pipe': expl_pipe})
+                    elif torus_dim == 2:
+                        for competitor_rate in [1.0, 0.6]:
+                            for radius in [1, 2, 3, 4]:
+                                parameters.append({'dataset_name': dataset_name,
+                                                   'torus_dim': torus_dim,
+                                                   'radius': radius,
+                                                   'pop_shape': (int(pop_size ** (1/torus_dim)), int(pop_size ** (1/torus_dim))),
+                                                   'pop_size': pop_size,
+                                                   'num_gen': num_gen,
+                                                   'competitor_rate': competitor_rate,
+                                                   'expl_pipe': expl_pipe})
     
+    # ===========================
+    # RUN EXPERIMENT
+    # ===========================
 
     start_time: float = time.time()
 
-    run_experiment_all_datasets(
-        folder_name=folder_name,
-        parameters=parameters,
-        dataset_path_folder=dataset_path_folder,
-        pop_size=pop_size,
-        num_gen=num_gen,
-        max_depth=max_depth,
-        generation_strategy=generation_strategy,
-        operators=operators,
-        low_erc=low_erc,
-        high_erc=high_erc,
-        n_constants=n_constants,
-        crossover_probability=crossover_probability,
-        mutation_probability=mutation_probability,
-        m=m,
-        competitor_rate=competitor_rate,
-        duplicates_elimination=duplicates_elimination,
-        elitism=elitism,
-        start_seed=1,
-        end_seed=1,
-        gen_verbosity_level=num_gen,
-        multiprocess=False,
-        verbose=True
-    )
+    # = EXPERIMENT MULTIPROCESSING AND VERBOSE PARAMETERS =
+
+    start_seed: int = 1
+    end_seed: int = 100
+    gen_verbosity_level: int = num_gen
+    verbose: bool = False
+    multiprocess: bool = True
+    num_cores: int = os.cpu_count()
+    if len(parameters) <= num_cores:
+        total_num_of_param_blocks: int = 1
+    else:
+        if len(parameters) % num_cores == 0:
+            total_num_of_param_blocks: int = int(len(parameters)/num_cores)
+        else:
+            total_num_of_param_blocks: int = int(len(parameters)/num_cores) + 1
+    
+    # = EXPERIMENTS =
+
+    for curr_ind_num_cores in range(total_num_of_param_blocks):
+        
+        parameters_start_ind: int = curr_ind_num_cores * num_cores
+        parameters_end_ind: int = parameters_start_ind + num_cores if curr_ind_num_cores != total_num_of_param_blocks - 1 else len(parameters)
+        parameters_temp: list[dict[str, Any]] = parameters[parameters_start_ind:parameters_end_ind]
+
+        if not multiprocess:
+            parallelizer: Parallelizer = FakeParallelizer()
+        else:
+            parallelizer: Parallelizer = MultiProcessingParallelizer(len(parameters_temp) if os.cpu_count() >= len(parameters_temp) else os.cpu_count())
+        
+        # = PARALLEL EXECUTION =
+
+        parallel_func: Callable = partial(run_single_experiment,
+                                            folder_name=folder_name,
+                                            dataset_path_folder=dataset_path_folder,
+                                            max_depth=max_depth,
+                                            generation_strategy=generation_strategy,
+                                            operators=operators,
+                                            low_erc=low_erc,
+                                            high_erc=high_erc,
+                                            n_constants=n_constants,
+                                            crossover_probability=crossover_probability,
+                                            mutation_probability=mutation_probability,
+                                            m=m,
+                                            duplicates_elimination=duplicates_elimination,
+                                            elitism=elitism,
+                                            start_seed=start_seed,
+                                            end_seed=end_seed,
+                                            gen_verbosity_level=gen_verbosity_level,
+                                            verbose=verbose
+                                        )
+        _ = parallelizer.parallelize(parallel_func, parameters=parameters_temp)
 
     end_time: float = time.time()
 

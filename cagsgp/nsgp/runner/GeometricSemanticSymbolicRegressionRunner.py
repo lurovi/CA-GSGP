@@ -26,8 +26,8 @@ from genepro.node_impl import Constant
 
     
 def run_symbolic_regression_with_cellular_automata_gsgp(
-    pop_size: int,
     pop_shape: tuple[int, ...],
+    pop_size: int,
     num_gen: int,
     max_depth: int,
     generation_strategy: str,
@@ -44,12 +44,29 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
     mutation_probability: float,
     m: float,
     competitor_rate: float,
+    expl_pipe: str,
     duplicates_elimination: str,
-    neighbors_topology: str,
+    torus_dim: int,
     radius: int,
     elitism: bool
-) -> tuple[dict[str, Any], str]:
-    
+) -> tuple[dict[str, Any], str, str]:
+
+    # ===========================
+    # SETTING EXPL_PIPE STUFF
+    # ===========================
+
+    if expl_pipe == 'crossmut':
+        execute_crossover: bool = True
+        execute_mutation: bool = True
+    elif expl_pipe == 'crossonly':
+        execute_crossover: bool = True
+        execute_mutation: bool = False
+    elif expl_pipe == 'mutonly':
+        execute_crossover: bool = False
+        execute_mutation: bool = True
+    else:
+        raise ValueError(f'{expl_pipe} is not a valid exploration pipeline.')
+
     # ===========================
     # LOADING DATASET
     # ===========================
@@ -99,19 +116,20 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
 
     is_tournament_selection: bool = False
     pressure: int = (2 * radius + 1) ** len(pop_shape)
-    if neighbors_topology == 'matrix':
+    if torus_dim == 2:
         neighbors_topology_factory: NeighborsTopologyFactory = RowMajorMatrixFactory(n_rows=pop_shape[0], n_cols=pop_shape[1], radius=radius)
-    elif neighbors_topology == 'cube':
+    elif torus_dim == 3:
         neighbors_topology_factory: NeighborsTopologyFactory = RowMajorCubeFactory(n_channels=pop_shape[0], n_rows=pop_shape[1], n_cols=pop_shape[2], radius=radius)
-    elif neighbors_topology == 'line':
+    elif torus_dim == 1:
         neighbors_topology_factory: NeighborsTopologyFactory = RowMajorLineFactory(radius=radius)
-    elif neighbors_topology == 'tournament':
+    elif torus_dim == 0:
         pressure = radius
         radius = 0
+        competitor_rate = 0.0
         is_tournament_selection = True
         neighbors_topology_factory: NeighborsTopologyFactory = TournamentTopologyFactory(pressure=pressure)
     else:
-        raise ValueError(f'{neighbors_topology} is not a valid neighbors topology.')
+        raise ValueError(f'{torus_dim} is not a valid torus dimension.')
 
     # ===========================
     # GSGP RUN
@@ -134,6 +152,8 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
         neighbors_topology_factory=neighbors_topology_factory,
         elitism=elitism,
         is_tournament_selection=is_tournament_selection,
+        execute_crossover=execute_crossover,
+        execute_mutation=execute_mutation,
         train_set=(X_train, y_train),
         test_set=(X_test, y_test)
     )
@@ -160,19 +180,21 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
         mutation_probability=mutation_probability,
         m=m,
         competitor_rate=competitor_rate,
+        expl_pipe=expl_pipe,
         execution_time_in_minutes=execution_time_in_minutes,
-        neighbors_topology=neighbors_topology,
+        torus_dim=torus_dim,
         radius=radius,
         elitism=elitism,
         dataset_name=dataset_name,
         duplicates_elimination=duplicates_elimination
     )
     
-    run_id: str = f"cgsgp-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-neighbors_topology_{neighbors_topology}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(crossover_probability, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-radius_{str(radius)}-pressure_{str(pressure)}-genstrategy_{generation_strategy}-elitism_{str(int(elitism))}-SEED{seed}"
+    path_run_id: str = f'cmprate{str(round(competitor_rate, 2))}/{expl_pipe}/'
+    run_id: str = f"cgsgp-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-torus_dim_{torus_dim}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(crossover_probability, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-radius_{str(radius)}-pressure_{str(pressure)}-genstrategy_{generation_strategy}-elitism_{str(int(elitism))}-SEED{seed}"
     if verbose:
-        print(f"\nSYMBOLIC TREES RMSE CA-GSGP SOO: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Neighbors Topology {neighbors_topology}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}, Crossover Probability {str(round(crossover_probability, 2))}, Mutation Probability {str(round(mutation_probability, 2))}, M {str(round(m, 2))}, CompetitorRate {str(round(competitor_rate, 2))}, Radius {str(radius)}, Pressure {str(pressure)}, Generation Strategy {generation_strategy}, Elitism {str(int(elitism))}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
+        print(f"\nSYMBOLIC TREES RMSE CA-GSGP SOO: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Torus Dim {torus_dim}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}, Crossover Probability {str(round(crossover_probability, 2))}, Mutation Probability {str(round(mutation_probability, 2))}, M {str(round(m, 2))}, CompetitorRate {str(round(competitor_rate, 2))}, Radius {str(radius)}, Pressure {str(pressure)}, Generation Strategy {generation_strategy}, Elitism {str(int(elitism))}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
     
-    return pareto_front_df, run_id
+    return pareto_front_df, path_run_id, run_id
 
 
 def __ca_inspired_gsgp(
@@ -190,6 +212,8 @@ def __ca_inspired_gsgp(
     neighbors_topology_factory: NeighborsTopologyFactory,
     elitism: bool,
     is_tournament_selection: bool,
+    execute_crossover: bool,
+    execute_mutation: bool,
     train_set: tuple[np.ndarray, np.ndarray],
     test_set: tuple[np.ndarray, np.ndarray]
 ) -> dict[str, Any]:
@@ -231,7 +255,6 @@ def __ca_inspired_gsgp(
     # ===========================
     
     pop: list[tuple[Node, dict[str, float]]] = [(structure.generate_tree(), {}) for _ in range(pop_size)]
-    #tournament_selector_factory: NeighborsTopologyFactory = TournamentTopologyFactory(pressure=4) # NEW LINE S2
 
     # ===========================
     # ITERATIONS
@@ -267,11 +290,11 @@ def __ca_inspired_gsgp(
         neighbors_topology: NeighborsTopology = neighbors_topology_factory.create(evaluated_individuals, clone=False)
 
         for coordinate in all_possible_coordinates:
+
             if not is_tournament_selection:
                 competitors: list[tuple[int, Node, float, float]] = [neighbors_topology.get(idx_tuple, clone=False) for idx_tuple in all_neighborhoods_indices[coordinate]]
                 competitors.sort(key=lambda x: x[0], reverse=False)
                 
-                # S1.5
                 if competitor_rate == 1.0:
                     sampled_competitors: list[tuple[int, Node, float, float]] = competitors
                 else:
@@ -281,14 +304,6 @@ def __ca_inspired_gsgp(
                 sampled_competitors.sort(key=lambda x: x[2], reverse=False)
                 first: tuple[int, Node, float, float] = sampled_competitors[0]
                 second: tuple[int, Node, float, float] = sampled_competitors[1]
-                
-                # S2
-                #first_tournament: list[tuple[int, Node, float, float]] = tournament_selector_factory.create(competitors, clone=False).neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)# NEW LINE S2
-                #first_tournament.sort(key=lambda x: x[2], reverse=False) # NEW LINE S2
-                #first: tuple[int, Node, float, float] = first_tournament[0] # NEW LINE S2
-                #second_tournament: list[tuple[int, Node, float, float]]=tournament_selector_factory.create(competitors, clone=False).neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)# NEW LINE S2
-                #second_tournament.sort(key=lambda x: x[2], reverse=False) # NEW LINE S2
-                #second: tuple[int, Node, float, float] = second_tournament[0] # NEW LINE S2
 
             else:
                 first_tournament: list[tuple[int, Node, float, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
@@ -320,14 +335,14 @@ def __ca_inspired_gsgp(
                 offsprings.append(pop[i])
             else:
                 # == CROSSOVER ==
-                if random.random() < crossover_probability:
+                if execute_crossover and random.random() < crossover_probability:
                     cx_tree: Node = structure.geometric_semantic_single_tree_crossover(first_parent[0], second_parent[0], enable_caching=True, fix_properties=True)
                     new_tree: tuple[Node, dict[str, float]] = (cx_tree, {})
                 else:
                     new_tree: tuple[Node, dict[str, float]] = (first_parent[0], {'train': first_parent[1], 'test': first_parent[2]})
 
                 # == MUTATION ==
-                if random.random() < mutation_probability:
+                if execute_mutation and random.random() < mutation_probability:
                     mutation_step: float = m if m != 0.0 else random.uniform(0.0, 1.0 + 1e-8)
                     mut_tree: Node = structure.geometric_semantic_tree_mutation(new_tree[0], m=mutation_step, fix_properties=True)
                     new_tree = (mut_tree, {})
@@ -403,12 +418,12 @@ def __fitness_evaluation_and_update_statistics_and_result(
     for dataset_type in ['train', 'test']:
         stats_collector[dataset_type].update_fitness_stat_dict(n_gen=current_gen, data=fit_values_dict[dataset_type])
     
-    table: PrettyTable = PrettyTable(["Generation", "Min", "Max", "Median", "Std"])
+    table: PrettyTable = PrettyTable(["Generation", "Min", "Mean", "Median", "Var"])
     table.add_row([str(current_gen),
                    stats_collector['train'].get_fitness_stat(current_gen, 'min'),
-                   stats_collector['train'].get_fitness_stat(current_gen, 'max'),
+                   stats_collector['train'].get_fitness_stat(current_gen, 'mean'),
                    stats_collector['train'].get_fitness_stat(current_gen, 'median'),
-                   stats_collector['train'].get_fitness_stat(current_gen, 'std')])
+                   stats_collector['train'].get_fitness_stat(current_gen, 'var')])
     
     if verbose and current_gen > 0 and current_gen % gen_verbosity_level == 0:
         print(table)

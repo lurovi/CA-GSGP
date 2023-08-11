@@ -7,7 +7,7 @@ if __name__ == "__main__":
     codebase_folder = os.environ["CURRENT_CODEBASE_FOLDER"]
     folder = codebase_folder + 'python_data/CA-GSGP/'
     seed = 42
-    dataset_names: list[str] = ['airfoil', 'bioav', 'concrete', 'parkinson', 'ppb', 'slump', 'toxicity', 'vladislavleva-14', 'yacht']
+    dataset_names: list[str] = ['airfoil', 'bioav', 'keijzer6', 'concrete', 'parkinson', 'ppb', 'slump', 'toxicity', 'vladislavleva14', 'yacht']
 
     for name in dataset_names:
         for i in range(1, 100 + 1):
