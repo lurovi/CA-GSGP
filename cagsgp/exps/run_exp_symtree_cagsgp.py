@@ -143,7 +143,7 @@ if __name__ == '__main__':
 
     start_seed: int = 1
     end_seed: int = 100
-    gen_verbosity_level: int = num_gen
+    gen_verbosity_level: int = 50
     verbose: bool = False
     multiprocess: bool = True
     num_cores: int = os.cpu_count()
