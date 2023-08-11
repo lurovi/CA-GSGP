@@ -454,8 +454,7 @@ def __fitness_evaluation_and_update_statistics_and_result(
         {kk: result['best'][kk] for kk in result['best']}
         |
         {   
-            'PopMultiDistance': SemanticDistance.compute_multi_euclidean_distance_from_list(semantic_vectors),
-            'BestDistanceStats': SemanticDistance.compute_stats(SemanticDistance.compute_distances_between_vector_at_index_and_rest_of_the_list(idx=index_of_min_value, vectors=semantic_vectors))
+            'EuclideanDistanceStats': SemanticDistance.compute_stats_all_distinct_distances(semantic_vectors)
         }
     )
 
