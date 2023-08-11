@@ -171,7 +171,7 @@ class ResultUtils:
         seed_str: str = str(seed)
         
         path_run_id: str = f'cmprate{cmprate}/{expl_pipe}/'
-        run_id: str = f"cgsgp-popsize_{str(pop_size)}-numgen_{str(num_gen)}-maxdepth_{str(max_depth)}-torus_dim_{str(torus_dim)}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{pop_shape_str}-crossprob_{crossprob}-mutprob_{mutprob}-m_{m_str}-radius_{radius_str}-pressure_{pressure_str}-genstrategy_{generation_strategy}-elitism_{elitism_str}-SEED{seed_str}"
+        run_id: str = f"cgsgp-popsize_{str(pop_size)}-numgen_{str(num_gen)}-maxdepth_{str(max_depth)}-torus_dim_{str(torus_dim)}-dataset_{dataset_name}-dupl_elim_{duplicates_elimination}-pop_shape_{pop_shape_str}-crossprob_{crossprob}-mutprob_{mutprob}-m_{m_str}-radius_{radius_str}-pressure_{pressure_str}-genstrat_{generation_strategy}-elitism_{elitism_str}-SEED{seed_str}"
 
         with open(folder_name + path_run_id + result_file_type + run_id + '.json', 'r') as f:
             data: dict[str, Any] = json.load(f)

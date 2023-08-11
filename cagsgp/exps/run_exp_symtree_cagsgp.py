@@ -77,8 +77,8 @@ def run_single_experiment(
 
 
 if __name__ == '__main__':
-    # Datasets: ['airfoil', 'keijzer6', 'concrete', 'vladislavleva14', 'slump', 'toxicity', 'yacht', 'parkinson']
-    # Datasets: ['airfoil', 'keijzer6', 'concrete', 'vladislavleva14', 'slump', 'toxicity', 'yacht']
+    # Datasets: ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']
+    # Datasets: ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht']
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
     #folder_name: str = '/home/luigirovito/python_data/' + 'CA-GSGP/' + 'results_1' + '/'
@@ -108,9 +108,9 @@ if __name__ == '__main__':
 
     parameters: list[dict[str, Any]] = []
 
-    for pop_size, num_gen in [(100, 500), (400, 125), (625, 80)]:
-        for expl_pipe in ['crossmut', 'crossonly', 'mutonly']:
-            for dataset_name in ['airfoil', 'keijzer6', 'concrete', 'vladislavleva14', 'slump', 'toxicity', 'yacht']:
+    for dataset_name in ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']:
+        for pop_size, num_gen in [(100, 500), (400, 125), (625, 80)]:
+            for expl_pipe in ['crossmut', 'crossonly', 'mutonly']:
                 for torus_dim in [0, 2]:
                     if torus_dim == 0:
                         parameters.append({'dataset_name': dataset_name,

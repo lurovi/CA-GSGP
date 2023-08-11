@@ -186,11 +186,11 @@ class TreeStructure:
                                                         fixed_constants=self.__fixed_constants, generation_strategy=self.__generation_strategy,
                                                         fix_properties=fix_properties, enable_caching=enable_caching, **kwargs)
 
-    def geometric_semantic_tree_mutation(self, tree: Node, m: float, fix_properties: bool = False, **kwargs) -> Node:
+    def geometric_semantic_tree_mutation(self, tree: Node, m: float, enable_caching: bool = False, fix_properties: bool = False, **kwargs) -> Node:
         return geometric_semantic_tree_mutation(tree, internal_nodes=self.__operators, leaf_nodes=self.__terminals,
                                                 max_depth=self.__max_depth, generation_strategy=self.__generation_strategy,
                                                 ephemeral_func=self.__ephemeral_func, p=self.__p,
-                                                fixed_constants=self.__fixed_constants, m=m, fix_properties=fix_properties,
+                                                fixed_constants=self.__fixed_constants, m=m, enable_caching=enable_caching, fix_properties=fix_properties,
                                                 **kwargs)
         
     def get_dict_representation(self, tree: Node) -> dict[int, str]:

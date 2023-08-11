@@ -190,7 +190,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
     )
     
     path_run_id: str = f'cmprate{str(round(competitor_rate, 2))}/{expl_pipe}/'
-    run_id: str = f"cgsgp-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-torus_dim_{torus_dim}-dataset_{dataset_name}-duplicates_elimination_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(crossover_probability, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-radius_{str(radius)}-pressure_{str(pressure)}-genstrategy_{generation_strategy}-elitism_{str(int(elitism))}-SEED{seed}"
+    run_id: str = f"cgsgp-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-torus_dim_{torus_dim}-dataset_{dataset_name}-dupl_elim_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(crossover_probability, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-radius_{str(radius)}-pressure_{str(pressure)}-genstrat_{generation_strategy}-elitism_{str(int(elitism))}-SEED{seed}"
     if verbose:
         print(f"\nSYMBOLIC TREES RMSE CA-GSGP SOO: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Torus Dim {torus_dim}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}, Crossover Probability {str(round(crossover_probability, 2))}, Mutation Probability {str(round(mutation_probability, 2))}, M {str(round(m, 2))}, CompetitorRate {str(round(competitor_rate, 2))}, Radius {str(radius)}, Pressure {str(pressure)}, Generation Strategy {generation_strategy}, Elitism {str(int(elitism))}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
     
@@ -344,7 +344,7 @@ def __ca_inspired_gsgp(
                 # == MUTATION ==
                 if execute_mutation and random.random() < mutation_probability:
                     mutation_step: float = m if m != 0.0 else random.uniform(0.0, 1.0 + 1e-8)
-                    mut_tree: Node = structure.geometric_semantic_tree_mutation(new_tree[0], m=mutation_step, fix_properties=True)
+                    mut_tree: Node = structure.geometric_semantic_tree_mutation(new_tree[0], m=mutation_step, enable_caching=True, fix_properties=True)
                     new_tree = (mut_tree, {})
                 
                 offsprings.append(new_tree)
@@ -402,14 +402,17 @@ def __fitness_evaluation_and_update_statistics_and_result(
     # FITNESS EVALUATION
     # ===========================
 
-    fit_values_dict: dict[str, list[float]] = __compute_single_RMSE_value_and_replace(
+    tt: tuple[dict[str, list[float]], list[np.ndarray]] = __compute_single_RMSE_value_and_replace(
             pop=pop,
             pop_size=pop_size,
             X_train=train_set[0],
             y_train=train_set[1],
             X_test=test_set[0],
             y_test=test_set[1]
-    )   
+    )
+
+    fit_values_dict: dict[str, list[float]] = tt[0]
+    semantic_vectors: list[np.ndarray] = tt[1]
 
     # ===========================
     # UPDATE STATISTICS
@@ -451,19 +454,21 @@ def __fitness_evaluation_and_update_statistics_and_result(
     return (fit_values_dict, index_of_min_value)
 
 
-def __compute_single_RMSE_value_and_replace(pop: list[tuple[Node, dict[str, float]]], pop_size: int, X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray, y_test: np.ndarray) -> dict[str, list[float]]:
+def __compute_single_RMSE_value_and_replace(pop: list[tuple[Node, dict[str, float]]], pop_size: int, X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray, y_test: np.ndarray) -> tuple[dict[str, list[float]], list[np.ndarray]]:
     fit_values_dict: dict[str, list[float]] = {'train': [], 'test': []}
-    
+    semantic_vectors: list[np.ndarray] = []
+
     for i in range(pop_size):
         current_individual: tuple[Node, dict[str, float]] = pop[i]
         current_tree: Node = current_individual[0]
         current_fitness: dict[str, float] = current_individual[1]
+        p_train: np.ndarray = np.core.umath.clip(current_tree(X_train, dataset_type='train'), -1e+10, 1e+10)
+        semantic_vectors.append(p_train)
         if len(current_fitness) != 0:
             # This individual has already been evaluated before, no need to recompute its fitness again
             new_fitness: dict[str, float] = current_fitness
         else:
             # This individual has never been evaluated, need to compute its fitness
-            p_train: np.ndarray = np.core.umath.clip(current_tree(X_train, dataset_type='train'), -1e+10, 1e+10)
             p_test: np.ndarray = np.core.umath.clip(current_tree(X_test, dataset_type='test'), -1e+10, 1e+10)
             train_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y_train, p=p_train, linear_scaling=False, slope=None, intercept=None)
             test_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y_test, p=p_test, linear_scaling=False, slope=None, intercept=None)
@@ -472,4 +477,4 @@ def __compute_single_RMSE_value_and_replace(pop: list[tuple[Node, dict[str, floa
         fit_values_dict['train'].append(new_fitness['train'])
         fit_values_dict['test'].append(new_fitness['test'])
 
-    return fit_values_dict
+    return fit_values_dict, semantic_vectors
