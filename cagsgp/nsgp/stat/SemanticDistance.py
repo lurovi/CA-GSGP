@@ -54,6 +54,16 @@ class SemanticDistance:
         return SemanticDistance.compute_stats(mean_distances)
     
     @staticmethod
+    def compute_stats_all_distinct_distances(vectors: list[np.ndarray]) -> dict[str, float]:
+        distances: list[float] = []
+
+        for i in range(len(vectors) - 1):
+            for j in range(i + 1, len(vectors)):
+                distances.append(SemanticDistance.euclidean_distance(vectors[i], vectors[j]))
+
+        return SemanticDistance.compute_stats(distances)
+
+    @staticmethod
     def compute_stats(distances: list[float]) -> dict[str, float]:
         stats: dict[str, float] = {}
 
@@ -62,5 +72,7 @@ class SemanticDistance:
         stats['max'] = max(distances)
         stats['min'] = min(distances)
         stats['var'] = statistics.pvariance(distances, mu=stats['mean'])
+        stats['q1'] = float(np.percentile(distances, 25))
+        stats['q3'] = float(np.percentile(distances, 75))
 
         return stats
