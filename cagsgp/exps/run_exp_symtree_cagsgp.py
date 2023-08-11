@@ -109,7 +109,7 @@ if __name__ == '__main__':
     parameters: list[dict[str, Any]] = []
 
     for dataset_name in ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']:
-        for pop_size, num_gen in [(100, 500), (400, 125), (625, 80)]:
+        for pop_size, num_gen in [(100, 1000), (400, 250), (900, 111)]:
             for expl_pipe in ['crossmut', 'crossonly', 'mutonly']:
                 for torus_dim in [0, 2]:
                     if torus_dim == 0:
@@ -123,7 +123,7 @@ if __name__ == '__main__':
                                            'expl_pipe': expl_pipe})
                     elif torus_dim == 2:
                         for competitor_rate in [1.0, 0.6]:
-                            for radius in [1, 2, 3, 4]:
+                            for radius in [1, 2, 3]:
                                 parameters.append({'dataset_name': dataset_name,
                                                    'torus_dim': torus_dim,
                                                    'radius': radius,
