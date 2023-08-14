@@ -6,7 +6,7 @@ Main libraries:
 
 genepro (version 1.2.0) -> https://github.com/giorgia-nadizar/genepro/
 
-You can find the requirements.txt in the project folder.
+You can find the environment.yml in the project folder for conda environment.
 
 Be careful to properly set PYTHONPATH environment variable. Plus, mind that code leverages a custom environment variable called CURRENT\_CODEBASE\_FOLDER that contains the absolute path of the folder (the path ends with '/') that contains all code and data relevant for the project. You just have to set this variable properly to make it easier to access locations for code and data. Change the paths in the experiment scripts accordingly, always be careful that for paths pointing to a folder you must always put a '/' at the end.
 
