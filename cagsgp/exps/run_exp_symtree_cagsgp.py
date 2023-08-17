@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import os
 from collections.abc import Callable
 from cagsgp.util.parallel.FakeParallelizer import FakeParallelizer
@@ -44,7 +45,7 @@ def run_single_experiment(
         verbose: bool
 ) -> None:
     
-    dataset_path = dataset_path_folder + dataset_name + '/'
+    dataset_path: str = dataset_path_folder + dataset_name + '/'
     for seed in range(start_seed, end_seed + 1):
         t: tuple[dict[str, Any], str, str] = run_symbolic_regression_with_cellular_automata_gsgp(
             pop_shape=pop_shape,
@@ -73,7 +74,11 @@ def run_single_experiment(
         )
         ResultUtils.write_result_to_json(path=folder_name, path_run_id=t[1], run_id=t[2], pareto_front_dict=t[0])
     
-    print(f'PopSize {pop_size} NumGen {num_gen} ExplPipe {expl_pipe} Dataset {dataset_name} Radius {radius} TorusDim {torus_dim} CompetitorRate {competitor_rate} COMPLETED')
+    verbose_output: str = f'PopSize {pop_size} NumGen {num_gen} ExplPipe {expl_pipe} Dataset {dataset_name} Radius {radius} TorusDim {torus_dim} CompetitorRate {competitor_rate} COMPLETED'
+    print(verbose_output)
+    with open(folder_name + 'terminal_std_out.txt', 'a+') as terminal_std_out:
+        terminal_std_out.write(verbose_output)
+        terminal_std_out.write('\n')
 
 
 if __name__ == '__main__':
@@ -154,6 +159,10 @@ if __name__ == '__main__':
             total_num_of_param_blocks: int = int(len(parameters)/num_cores)
         else:
             total_num_of_param_blocks: int = int(len(parameters)/num_cores) + 1
+
+    with open(folder_name + 'terminal_std_out.txt', 'a+') as terminal_std_out:
+        terminal_std_out.write(str(datetime.datetime.now()))
+        terminal_std_out.write('\n\n\n')
     
     # = EXPERIMENTS =
 
@@ -166,7 +175,7 @@ if __name__ == '__main__':
         if not multiprocess:
             parallelizer: Parallelizer = FakeParallelizer()
         else:
-            parallelizer: Parallelizer = MultiProcessingParallelizer(len(parameters_temp) if os.cpu_count() >= len(parameters_temp) else os.cpu_count())
+            parallelizer: Parallelizer = MultiProcessingParallelizer(len(parameters_temp))
         
         # = PARALLEL EXECUTION =
 
@@ -190,6 +199,7 @@ if __name__ == '__main__':
                                             verbose=verbose
                                         )
         _ = parallelizer.parallelize(parallel_func, parameters=parameters_temp)
+
 
     end_time: float = time.time()
 
