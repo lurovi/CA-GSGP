@@ -5,6 +5,9 @@ from collections.abc import Callable
 from cagsgp.util.parallel.FakeParallelizer import FakeParallelizer
 from cagsgp.util.parallel.MultiProcessingParallelizer import MultiProcessingParallelizer
 from cagsgp.util.parallel.Parallelizer import Parallelizer
+from cagsgp.util.parallel.ProcessPoolExecutorParallelizer import ProcessPoolExecutorParallelizer
+from cagsgp.util.parallel.ThreadPoolExecutorParallelizer import ThreadPoolExecutorParallelizer
+from cagsgp.util.parallel.RayParallelizer import RayParallelizer
 os.environ['NUMPY_EXPERIMENTAL_ARRAY_FUNCTION'] = '0'
 import numpy as np
 import time
@@ -175,7 +178,10 @@ if __name__ == '__main__':
         if not multiprocess:
             parallelizer: Parallelizer = FakeParallelizer()
         else:
-            parallelizer: Parallelizer = MultiProcessingParallelizer(len(parameters_temp))
+            #parallelizer: Parallelizer = MultiProcessingParallelizer(len(parameters_temp))
+            #parallelizer: Parallelizer = ProcessPoolExecutorParallelizer(len(parameters_temp))
+            #parallelizer: Parallelizer = ThreadPoolExecutorParallelizer(len(parameters_temp))
+            parallelizer: Parallelizer = RayParallelizer(len(parameters_temp))
         
         # = PARALLEL EXECUTION =
 
