@@ -107,8 +107,14 @@ class TableUtils:
         # Print table content
         # ===================
 
+        cgsgp_sel_method: str = 'w/\\fullN' if competitor_rate == 1.0 else 'w/\\partialN{' + str(round(competitor_rate, 2)) +'}'
+        map_method_command: dict[str, str] = {'TD0-4': 'GSGP',
+                                              'TD2-1': '\\toroid{'+'2'+'}{'+'1'+'} '+cgsgp_sel_method,
+                                              'TD2-2': '\\toroid{'+'2'+'}{'+'2'+'} '+cgsgp_sel_method,
+                                              'TD2-3': '\\toroid{'+'2'+'}{'+'3'+'} '+cgsgp_sel_method}
+
         for method in ['TD2-1', 'TD2-2', 'TD2-3']:
-            tab_str += '{' + method + '}' + '\n'
+            tab_str += '{' + map_method_command[method] + '}' + '\n'
             for dataset_name in ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']:
                 for split_type in ['Train', 'Test']:
                     a: list[float] = fitness[method][dataset_name][split_type]
@@ -221,12 +227,18 @@ class TableUtils:
         # Print table content
         # ===================
 
+        cgsgp_sel_method: str = 'w/\\fullN' if competitor_rate == 1.0 else 'w/\\partialN{' + str(round(competitor_rate, 2)) +'}'
+        map_method_command: dict[str, str] = {'TD0-4': 'GSGP',
+                                              'TD2-1': '\\toroid{'+'2'+'}{'+'1'+'} '+cgsgp_sel_method,
+                                              'TD2-2': '\\toroid{'+'2'+'}{'+'2'+'} '+cgsgp_sel_method,
+                                              'TD2-3': '\\toroid{'+'2'+'}{'+'3'+'} '+cgsgp_sel_method}
+
         all_methods: list[str] = ['TD0-'+str(tournament_pressure) for tournament_pressure in tournament_pressures]
         if len(torusdim_radius_shapes) > 0:
             all_methods = all_methods + ['TD2-1', 'TD2-2', 'TD2-3']
         
         for method in all_methods:
-            tab_str += '{' + method + '}' + '\n'
+            tab_str += '{' + map_method_command[method] + '}' + '\n'
             
             for dataset_name in ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']:
                 a: list[float] = fitness[method][dataset_name]
