@@ -7,7 +7,7 @@ from cagsgp.util.parallel.MultiProcessingParallelizer import MultiProcessingPara
 from cagsgp.util.parallel.Parallelizer import Parallelizer
 from cagsgp.util.parallel.ProcessPoolExecutorParallelizer import ProcessPoolExecutorParallelizer
 from cagsgp.util.parallel.ThreadPoolExecutorParallelizer import ThreadPoolExecutorParallelizer
-from cagsgp.util.parallel.RayParallelizer import RayParallelizer
+#from cagsgp.util.parallel.RayParallelizer import RayParallelizer
 os.environ['NUMPY_EXPERIMENTAL_ARRAY_FUNCTION'] = '0'
 import numpy as np
 import time
@@ -93,6 +93,12 @@ if __name__ == '__main__':
     dataset_path_folder: str = codebase_folder + 'python_data/CA-GSGP/datasets_csv/'
     #dataset_path_folder: str = '/home/luigirovito/python_data/' + 'CA-GSGP/datasets_csv/'
 
+    parser: argparse.ArgumentParser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--ind', type=str, help='Index of the parameters set to be used for the task to run.', required=False)
+
+    args: argparse.Namespace = parser.parse_args()
+    task_index: str = args.ind
+
     # ===========================
     # COMMON AND FIXED PARAMETERS
     # ===========================
@@ -154,7 +160,7 @@ if __name__ == '__main__':
     gen_verbosity_level: int = 50
     verbose: bool = False
     multiprocess: bool = True
-    num_cores: int = os.cpu_count()
+    num_cores: int = os.cpu_count() - 4
     if len(parameters) <= num_cores:
         total_num_of_param_blocks: int = 1
     else:
@@ -179,9 +185,9 @@ if __name__ == '__main__':
             parallelizer: Parallelizer = FakeParallelizer()
         else:
             #parallelizer: Parallelizer = MultiProcessingParallelizer(len(parameters_temp))
-            #parallelizer: Parallelizer = ProcessPoolExecutorParallelizer(len(parameters_temp))
+            parallelizer: Parallelizer = ProcessPoolExecutorParallelizer(len(parameters_temp))
             #parallelizer: Parallelizer = ThreadPoolExecutorParallelizer(len(parameters_temp))
-            parallelizer: Parallelizer = RayParallelizer(len(parameters_temp))
+            #parallelizer: Parallelizer = RayParallelizer(len(parameters_temp))
         
         # = PARALLEL EXECUTION =
 
@@ -204,8 +210,12 @@ if __name__ == '__main__':
                                             gen_verbosity_level=gen_verbosity_level,
                                             verbose=verbose
                                         )
-        _ = parallelizer.parallelize(parallel_func, parameters=parameters_temp)
-
+        
+        if task_index is None:
+            _ = parallelizer.parallelize(parallel_func, parameters=parameters_temp)
+        else:
+            _ = FakeParallelizer().parallelize(parallel_func, parameters=[parameters_temp[int(task_index)]])
+            break
 
     end_time: float = time.time()
 
