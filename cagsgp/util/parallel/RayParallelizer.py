@@ -6,7 +6,7 @@ import ray
 from cagsgp.util.parallel.Parallelizer import Parallelizer
 
 T = TypeVar('T')
-ray.init()
+ray.init(ignore_reinit_error=True)
 
 
 class RayParallelizer(Parallelizer):
@@ -55,7 +55,8 @@ class RayParallelizer(Parallelizer):
         number_of_processes: int = {-2: (os.cpu_count()), -1: (os.cpu_count() - 1)}.get(self.num_workers(), self.num_workers())
 
         res = ray.get([target_method_wrapper.remote(parameter=parameter, target_method=target_method) for parameter in parameters])
-
+        print(res)
+        print(type(res))
         return res
 
 
