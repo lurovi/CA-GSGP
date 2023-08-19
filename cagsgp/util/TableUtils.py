@@ -112,7 +112,8 @@ class TableUtils:
                                               'TD2-1': '\\toroid{'+'2'+'}{'+'1'+'} '+cgsgp_sel_method,
                                               'TD2-2': '\\toroid{'+'2'+'}{'+'2'+'} '+cgsgp_sel_method,
                                               'TD2-3': '\\toroid{'+'2'+'}{'+'3'+'} '+cgsgp_sel_method}
-
+        map_expl_pipe_command: dict[str, str] = {'crossmut': '\\CxMut', 'crossonly': '\\Cx', 'mutonly': '\\Mut'}
+        
         for method in ['TD2-1', 'TD2-2', 'TD2-3']:
             tab_str += '{' + map_method_command[method] + '}' + '\n'
             for dataset_name in ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']:
@@ -232,6 +233,7 @@ class TableUtils:
                                               'TD2-1': '\\toroid{'+'2'+'}{'+'1'+'} '+cgsgp_sel_method,
                                               'TD2-2': '\\toroid{'+'2'+'}{'+'2'+'} '+cgsgp_sel_method,
                                               'TD2-3': '\\toroid{'+'2'+'}{'+'3'+'} '+cgsgp_sel_method}
+        map_expl_pipe_command: dict[str, str] = {'crossmut': '\\CxMut', 'crossonly': '\\Cx', 'mutonly': '\\Mut'}
 
         all_methods: list[str] = ['TD0-'+str(tournament_pressure) for tournament_pressure in tournament_pressures]
         if len(torusdim_radius_shapes) > 0:
