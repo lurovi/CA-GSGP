@@ -116,7 +116,7 @@ class TableUtils:
         
         for method in ['TD2-1', 'TD2-2', 'TD2-3']:
             tab_str += '{' + map_method_command[method] + '}' + '\n'
-            for dataset_name in ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']:
+            for dataset_name in ['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']:
                 for split_type in ['Train', 'Test']:
                     a: list[float] = fitness[method][dataset_name][split_type]
                     b: list[float] = fitness[StringUtils.concat('TD', str(0))+'-'+str(4)][dataset_name][split_type]
@@ -235,14 +235,14 @@ class TableUtils:
                                               'TD2-3': '\\toroid{'+'2'+'}{'+'3'+'} '+cgsgp_sel_method}
         map_expl_pipe_command: dict[str, str] = {'crossmut': '\\CxMut', 'crossonly': '\\Cx', 'mutonly': '\\Mut'}
 
-        all_methods: list[str] = ['TD0-'+str(tournament_pressure) for tournament_pressure in tournament_pressures]
+        all_methods: list[str] = [] #['TD0-'+str(tournament_pressure) for tournament_pressure in tournament_pressures]
         if len(torusdim_radius_shapes) > 0:
-            all_methods = all_methods + ['TD2-1', 'TD2-2', 'TD2-3']
+            all_methods = all_methods + ['TD0-4', 'TD2-1', 'TD2-2', 'TD2-3']
         
         for method in all_methods:
             tab_str += '{' + map_method_command[method] + '}' + '\n'
             
-            for dataset_name in ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']:
+            for dataset_name in ['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']:
                 a: list[float] = fitness[method][dataset_name]
                 outperformed_methods: list[str] = []
                 all_p_values: list[float] = []
@@ -305,27 +305,26 @@ class TableUtils:
 
 
 if __name__ == '__main__':
-    # Datasets: ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']
-    # Datasets: ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht']
+    # Datasets: ['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
 
     TableUtils.print_table_wilcoxon_medianrmse_datasets_cellular_vs_tournament_for_single_split_type(folder_name=folder_name,
                                               split_type='Test',
                                               seed_list=list(range(1, 100 + 1)),
-                                              tournament_pressures=[4],
+                                              tournament_pressures=[],
                                               bonferroni_correction=True,
                                               wilcoxon_only_with_baseline=False,
                                               #torusdim_radius_shapes=[],
-                                              torusdim_radius_shapes=[(0,4,(100,)),
-                                                                        (2,1,(10,10)),
-                                                                        (2,2,(10,10)),
-                                                                        (2,3,(10,10))
+                                              torusdim_radius_shapes=[(0,4,(900,)),
+                                                                        (2,1,(30,30)),
+                                                                        (2,2,(30,30)),
+                                                                        (2,3,(30,30))
                                                                         ],
-                                              dataset_names=['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson'],
-                                              pop_size=100,
-                                              num_gen=1000,
-                                              last_gen=1000,
+                                              dataset_names=['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson'],
+                                              pop_size=900,
+                                              num_gen=111,
+                                              last_gen=111,
                                               max_depth=6,
                                               expl_pipe='crossmut',
                                               competitor_rate=0.6,

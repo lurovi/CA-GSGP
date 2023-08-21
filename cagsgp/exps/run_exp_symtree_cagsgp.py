@@ -85,8 +85,7 @@ def run_single_experiment(
 
 
 if __name__ == '__main__':
-    # Datasets: ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']
-    # Datasets: ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht']
+    # Datasets: ['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
     #folder_name: str = '/home/luigirovito/python_data/' + 'CA-GSGP/' + 'results_1' + '/'
@@ -122,7 +121,7 @@ if __name__ == '__main__':
 
     parameters: list[dict[str, Any]] = []
 
-    for dataset_name in ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']:
+    for dataset_name in ['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']:
         for pop_size, num_gen in [(100, 1000), (400, 250), (900, 111)]:
             for expl_pipe in ['crossmut', 'crossonly', 'mutonly']:
                 for torus_dim in [0, 2]:
