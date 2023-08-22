@@ -309,6 +309,14 @@ if __name__ == '__main__':
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
 
+    pop_size: int = 100
+    num_gen: int = 1000
+    competitor_rate: float = 0.6
+    expl_pipe: str = 'mutonly'
+    torus_dim: int = 2
+    pop_shape: tuple[int, ...] = (int(pop_size ** (1/torus_dim)), int(pop_size ** (1/torus_dim)))
+    
+
     TableUtils.print_table_wilcoxon_medianrmse_datasets_cellular_vs_tournament_for_single_split_type(folder_name=folder_name,
                                               split_type='Test',
                                               seed_list=list(range(1, 100 + 1)),
@@ -316,18 +324,18 @@ if __name__ == '__main__':
                                               bonferroni_correction=True,
                                               wilcoxon_only_with_baseline=False,
                                               #torusdim_radius_shapes=[],
-                                              torusdim_radius_shapes=[(0,4,(900,)),
-                                                                        (2,1,(30,30)),
-                                                                        (2,2,(30,30)),
-                                                                        (2,3,(30,30))
+                                              torusdim_radius_shapes=[(0,4,(pop_size,)),
+                                                                        (torus_dim,1,pop_shape),
+                                                                        (torus_dim,2,pop_shape),
+                                                                        (torus_dim,3,pop_shape)
                                                                         ],
                                               dataset_names=['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson'],
-                                              pop_size=900,
-                                              num_gen=111,
-                                              last_gen=111,
+                                              pop_size=pop_size,
+                                              num_gen=num_gen,
+                                              last_gen=num_gen,
                                               max_depth=6,
-                                              expl_pipe='crossmut',
-                                              competitor_rate=0.6,
+                                              expl_pipe=expl_pipe,
+                                              competitor_rate=competitor_rate,
                                               duplicates_elimination='nothing',
                                               crossover_probability=0.90,
                                               mutation_probability=0.50,
