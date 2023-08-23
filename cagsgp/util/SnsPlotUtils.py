@@ -300,6 +300,7 @@ class SnsPlotUtils:
             
             title: str = StringUtils.only_first_char_upper(dataset_name) + ' ' + split_type + ' Median Best RMSE'
             file_name: str = 'lineplot'+'-'+split_type+'-'+dataset_name+'-'+main_topology_name+'.svg'
+            #file_name: str = 'lineplot'+'-'+split_type+'-'+dataset_name+'-'+main_topology_name+'.png'
 
             for torus_dim, radius, shape in torusdim_radius_shapes:
                 for seed in seed_list:
@@ -328,7 +329,9 @@ class SnsPlotUtils:
                     for i, d in enumerate(history, 0):
                         data['Generation'].append(i)
                         data['Topology'].append(StringUtils.concat('TD', str(torus_dim))+'-'+str(radius))
-                        data['Best RMSE'].append(d['Fitness'][split_type+' RMSE'])
+                        #data['Best RMSE'].append(d['Fitness'][split_type+' RMSE']) # Test RMSE preso dal file che inizia con b
+                        data['Best RMSE'].append(d['EuclideanDistanceStats']['median']) # distance euclidea mediana presa dal file che inizia con b
+                        #data['Best RMSE'].append(d['RMSE']['median']) # la fitness mediana sul train di tutti gli individui nella popolazione presa dal file che inizia con tr 
                     history = None
 
             data: pd.DataFrame = pd.DataFrame(data)
@@ -341,6 +344,7 @@ class SnsPlotUtils:
             if log_scale_y:
                 plt.yscale('log')
             plt.savefig(output_path+file_name, format='svg')
+            #plt.savefig(output_path+file_name, format='png')
             # plt.show()
             plt.clf()
             plt.cla()
@@ -426,31 +430,36 @@ class SnsPlotUtils:
 
 
 if __name__ == '__main__':
-    # Datasets: ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']
-    # Datasets: ['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht']
+    # Datasets: ['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
     output_path: str = codebase_folder + 'python_data/CA-GSGP/' + 'images_1' + '/'
 
-    '''
+    pop_size: int = 900
+    num_gen: int = 111
+    competitor_rate: float = 1.0
+    expl_pipe: str = 'crossmut'
+    torus_dim: int = 2
+    pop_shape: tuple[int, ...] = (int(pop_size ** (1/torus_dim)), int(pop_size ** (1/torus_dim)))
+
     SnsPlotUtils.simple_line_plot_topology_single_split_type(folder_name=folder_name,
                                               output_path=output_path,
                                               split_type='Test',
                                               seed_list=list(range(1, 100 + 1)), 
-                                              torusdim_radius_shapes=[(0,4,(100,)),
-                                                                        (2,1,(10,10)),
-                                                                        (2,2,(10,10)),
-                                                                        (2,3,(10,10))
+                                              torusdim_radius_shapes=[(0,4,(pop_size,)),
+                                                                        (torus_dim,1,pop_shape),
+                                                                        (torus_dim,2,pop_shape),
+                                                                        (torus_dim,3,pop_shape)
                                                                         ],
-                                              main_topology_name='all',
-                                              dataset_names=['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson'],
-                                              log_scaled_datasets=[],
-                                              pop_size=100,
-                                              num_gen=1000,
-                                              last_gen=1000,
+                                              main_topology_name='matrix',
+                                              dataset_names=['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson'],
+                                              log_scaled_datasets=['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson'],
+                                              pop_size=pop_size,
+                                              num_gen=num_gen,
+                                              last_gen=num_gen,
                                               max_depth=6,
-                                              expl_pipe='crossmut',
-                                              competitor_rate=0.6,
+                                              expl_pipe=expl_pipe,
+                                              competitor_rate=competitor_rate,
                                               duplicates_elimination='nothing',
                                               crossover_probability=0.90,
                                               mutation_probability=0.50,
@@ -459,7 +468,7 @@ if __name__ == '__main__':
                                               elitism=True
                                               )
 
-    
+    '''
     SnsPlotUtils.simple_box_plot_topology_single_split_type(folder_name=folder_name,
                                               output_path=output_path,
                                               split_type='Test',
@@ -487,6 +496,7 @@ if __name__ == '__main__':
                                               )
     '''
     
+    '''
     SnsPlotUtils.simple_line_plot_topology_split(folder_name=folder_name,
                                               output_path=output_path,
                                               seed_list=list(range(1, 100 + 1)), 
@@ -496,14 +506,14 @@ if __name__ == '__main__':
                                                                         (2,3,(10,10))
                                                                         ],
                                               main_topology_name='matrix',
-                                              dataset_names=['vladislavleva14', 'airfoil', 'keijzer6', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson'],
+                                              dataset_names=['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson'],
                                               log_scaled_datasets=[],
                                               pop_size=100,
                                               num_gen=1000,
                                               last_gen=1000,
                                               max_depth=6,
                                               expl_pipe='crossmut',
-                                              competitor_rate=0.6,
+                                              competitor_rate=1.0,
                                               duplicates_elimination='nothing',
                                               crossover_probability=0.90,
                                               mutation_probability=0.50,
@@ -561,7 +571,7 @@ if __name__ == '__main__':
                                               generation_strategy='half',
                                               elitism=True
                                               )
-    
+    '''
 
 
     
