@@ -301,12 +301,22 @@ class SnsPlotUtils:
             title: str = StringUtils.only_first_char_upper(dataset_name) + ' ' + split_type + ' Median Best RMSE'
             file_name: str = 'lineplot'+'-'+split_type+'-'+dataset_name+'-'+main_topology_name+'.svg'
             #file_name: str = 'lineplot'+'-'+split_type+'-'+dataset_name+'-'+main_topology_name+'.png'
+            
+            result_file_type: str = 'tr'
+            if result_file_type == 'b':
+                name_of_the_first_key: str = 'history'
+            elif result_file_type == 'tr':
+                name_of_the_first_key: str = 'train_statistics'
+            elif result_file_type == 'te':
+                name_of_the_first_key: str = 'test_statistics'
+            else:
+                raise ValueError(f'{result_file_type} is not a valid result file type')
 
             for torus_dim, radius, shape in torusdim_radius_shapes:
                 for seed in seed_list:
                     d: dict[str, Any] = ResultUtils.read_single_json_file(
                         folder_name=folder_name,
-                        result_file_type='b',
+                        result_file_type=result_file_type,
                         pop_size=pop_size,
                         num_gen=num_gen,
                         max_depth=max_depth,
@@ -324,14 +334,15 @@ class SnsPlotUtils:
                         elitism=elitism,
                         seed=seed
                     )
-                    history: list[dict[str, Any]] = d['history'][:(last_gen + 1)]
+                    
+                    history: list[dict[str, Any]] = d[name_of_the_first_key][:(last_gen + 1)]
                     d = None
                     for i, d in enumerate(history, 0):
                         data['Generation'].append(i)
                         data['Topology'].append(StringUtils.concat('TD', str(torus_dim))+'-'+str(radius))
                         #data['Best RMSE'].append(d['Fitness'][split_type+' RMSE']) # Test RMSE preso dal file che inizia con b
-                        data['Best RMSE'].append(d['EuclideanDistanceStats']['median']) # distance euclidea mediana presa dal file che inizia con b
-                        #data['Best RMSE'].append(d['RMSE']['median']) # la fitness mediana sul train di tutti gli individui nella popolazione presa dal file che inizia con tr 
+                        #data['Best RMSE'].append(d['EuclideanDistanceStats']['median']) # distance euclidea mediana presa dal file che inizia con b
+                        data['Best RMSE'].append(d['RMSE']['median']) # la fitness mediana sul train di tutti gli individui nella popolazione presa dal file che inizia con tr 
                     history = None
 
             data: pd.DataFrame = pd.DataFrame(data)
@@ -437,7 +448,7 @@ if __name__ == '__main__':
 
     pop_size: int = 900
     num_gen: int = 111
-    competitor_rate: float = 1.0
+    competitor_rate: float = 0.6
     expl_pipe: str = 'crossmut'
     torus_dim: int = 2
     pop_shape: tuple[int, ...] = (int(pop_size ** (1/torus_dim)), int(pop_size ** (1/torus_dim)))
