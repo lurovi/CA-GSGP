@@ -43,8 +43,8 @@ class TreeStructure:
             self.__p = []
         if self.__p != [] and self.__n_operators != len(self.__p):
             raise AttributeError(f"The length of probability distribution for internal nodes p is {len(self.__p)} but the number of operators is {self.__n_operators}. These two numbers must be equal.")
-        if self.__p != [] and sum(self.__p) != 1.0:
-            raise AttributeError(f"The p parameter must be a probability distribution, the sum {sum(self.__p)} is not 1.")
+        if self.__p != [] and abs(sum(self.__p) - 1.0) > 1e-5:
+                raise AttributeError(f"The p parameter must be a probability distribution, the sum {sum(self.__p)} is not very close to 1.")
         if self.__p != [] and any([ppp < 0 for ppp in self.__p]):
             raise AttributeError(f"The p parameter must be a probability distribution, however, here we have negative numbers.")
         self.__n_features: int = n_features
@@ -69,6 +69,19 @@ class TreeStructure:
 
     def get_p(self) -> list[float]:
         return deepcopy(self.__p)
+
+    def set_p(self, p: list[float]) -> None:
+        if p is None:
+            self.__p = []
+        else:
+            if p != [] and self.__n_operators != len(p):
+                raise AttributeError(f"The length of probability distribution for internal nodes p is {len(p)} but the number of operators is {self.__n_operators}. These two numbers must be equal.")
+            if p != [] and abs(sum(p) - 1.0) > 1e-5:
+                raise AttributeError(f"The p parameter must be a probability distribution, the sum {sum(p)} is not very close to 1.")
+            if p != [] and any([ppp < 0 for ppp in p]):
+                raise AttributeError(f"The p parameter must be a probability distribution, however, here we have negative numbers.")
+            
+            self.__p = p
 
     def get_generation_strategy(self) -> str:
         return self.__generation_strategy
