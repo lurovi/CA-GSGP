@@ -64,21 +64,11 @@ class TreeStructure:
 
         if self.__p is None:
             self.__p = []
-        if self.__p != [] and self.__n_operators != len(self.__p):
-            raise AttributeError(f"The length of probability distribution for internal nodes p is {len(self.__p)} but the number of operators is {self.__n_operators}. These two numbers must be equal.")
-        if self.__p != [] and abs(sum(self.__p) - 1.0) > 1e-5:
-                raise AttributeError(f"The p parameter must be a probability distribution, the sum {sum(self.__p)} is not very close to 1.")
-        if self.__p != [] and any([ppp < 0 for ppp in self.__p]):
-            raise AttributeError(f"The p parameter must be a probability distribution, however, here we have negative numbers.")
-        
+        self.__verify_prob_dist_on_operators(self.__p)
+
         if self.__p_leaves is None:
             self.__p_leaves = []
-        if self.__p_leaves != [] and self.__n_terminals != len(self.__p_leaves):
-            raise AttributeError(f"The length of probability distribution for terminal nodes p_leaves is {len(self.__p_leaves)} but the number of terminals is {self.__n_terminals}. These two numbers must be equal.")
-        if self.__p_leaves != [] and abs(sum(self.__p_leaves) - 1.0) > 1e-5:
-                raise AttributeError(f"The p_leaves parameter must be a probability distribution, the sum {sum(self.__p_leaves)} is not very close to 1.")
-        if self.__p_leaves != [] and any([ppp < 0 for ppp in self.__p_leaves]):
-            raise AttributeError(f"The p_leaves parameter must be a probability distribution, however, here we have negative numbers.")
+        self.__verify_prob_dist_on_terminals(self.__p_leaves)
 
     def get_p(self) -> list[float]:
         return deepcopy(self.__p)
@@ -90,26 +80,14 @@ class TreeStructure:
         if p is None:
             self.__p = []
         else:
-            if p != [] and self.__n_operators != len(p):
-                raise AttributeError(f"The length of probability distribution for internal nodes p is {len(p)} but the number of operators is {self.__n_operators}. These two numbers must be equal.")
-            if p != [] and abs(sum(p) - 1.0) > 1e-5:
-                raise AttributeError(f"The p parameter must be a probability distribution, the sum {sum(p)} is not very close to 1.")
-            if p != [] and any([ppp < 0 for ppp in p]):
-                raise AttributeError(f"The p parameter must be a probability distribution, however, here we have negative numbers.")
-            
+            self.__verify_prob_dist_on_operators(p)
             self.__p = p
 
     def set_p_leaves(self, p_leaves: list[float]) -> None:
         if p_leaves is None:
             self.__p_leaves = []
         else:
-            if p_leaves != [] and self.__n_terminals != len(p_leaves):
-                raise AttributeError(f"The length of probability distribution for terminal nodes p_leaves is {len(p_leaves)} but the number of terminals is {self.__n_terminals}. These two numbers must be equal.")
-            if p_leaves != [] and abs(sum(p_leaves) - 1.0) > 1e-5:
-                    raise AttributeError(f"The p_leaves parameter must be a probability distribution, the sum {sum(p_leaves)} is not very close to 1.")
-            if p_leaves != [] and any([ppp < 0 for ppp in p_leaves]):
-                raise AttributeError(f"The p_leaves parameter must be a probability distribution, however, here we have negative numbers.")
-            
+            self.__verify_prob_dist_on_terminals(p_leaves)
             self.__p_leaves = p_leaves
 
     def get_generation_strategy(self) -> str:
@@ -215,10 +193,21 @@ class TreeStructure:
                                     generation_strategy=self.__generation_strategy,
                                     fixed_constants=self.__fixed_constants, p_leaves=self.__p_leaves, **kwargs)
 
+    def generate_tree_with_prob(self, p: list[float] = None, p_leaves: list[float] = None, **kwargs) -> Node:
+        return generate_tree_wrt_strategy(self.__operators, self.__terminals, max_depth=self.get_max_depth(),
+                                    ephemeral_func=self.__ephemeral_func, p=p,
+                                    generation_strategy=self.__generation_strategy,
+                                    fixed_constants=self.__fixed_constants, p_leaves=p_leaves, **kwargs)
+    
     def safe_subtree_mutation(self, tree: Node, **kwargs) -> Node:
         return safe_subtree_mutation(tree, self.__operators, self.__terminals, max_depth=self.__max_depth,
                                      ephemeral_func=self.__ephemeral_func, p=self.__p, fixed_constants=self.__fixed_constants,
                                      generation_strategy=self.__generation_strategy, p_leaves=self.__p_leaves, **kwargs)
+
+    def safe_subtree_mutation_with_prob(self, tree: Node, p: list[float] = None, p_leaves: list[float] = None, **kwargs) -> Node:
+        return safe_subtree_mutation(tree, self.__operators, self.__terminals, max_depth=self.__max_depth,
+                                     ephemeral_func=self.__ephemeral_func, p=p, fixed_constants=self.__fixed_constants,
+                                     generation_strategy=self.__generation_strategy, p_leaves=p_leaves, **kwargs)
 
     def safe_subtree_crossover_two_children(self, tree_1: Node, tree_2: Node) -> tuple[Node, Node]:
         return safe_subtree_crossover_two_children(tree_1, tree_2, max_depth=self.__max_depth)
@@ -333,3 +322,19 @@ class TreeStructure:
     @staticmethod
     def get_lisp_repr(node: Node) -> str:
         return node.get_string_as_lisp_expr()
+
+    def __verify_prob_dist_on_operators(self, p: list[float]) -> None:
+        if p != [] and self.__n_operators != len(p):
+            raise AttributeError(f"The length of probability distribution for internal nodes p is {len(p)} but the number of operators is {self.__n_operators}. These two numbers must be equal.")
+        if p != [] and abs(sum(p) - 1.0) > 1e-5:
+            raise AttributeError(f"The p parameter must be a probability distribution, the sum {sum(p)} is not very close to 1.")
+        if p != [] and any([ppp < 0 for ppp in p]):
+            raise AttributeError(f"The p parameter must be a probability distribution, however, here we have negative numbers.")
+        
+    def __verify_prob_dist_on_terminals(self, p_leaves: list[float]) -> None:
+        if p_leaves != [] and self.__n_terminals != len(p_leaves):
+            raise AttributeError(f"The length of probability distribution for terminal nodes p_leaves is {len(p_leaves)} but the number of terminals is {self.__n_terminals}. These two numbers must be equal.")
+        if p_leaves != [] and abs(sum(p_leaves) - 1.0) > 1e-5:
+            raise AttributeError(f"The p_leaves parameter must be a probability distribution, the sum {sum(p_leaves)} is not very close to 1.")
+        if p_leaves != [] and any([ppp < 0 for ppp in p_leaves]):
+            raise AttributeError(f"The p_leaves parameter must be a probability distribution, however, here we have negative numbers.")
