@@ -231,11 +231,13 @@ def __ca_inspired_gsgp(
     # ===========================
 
     # == RESULT, STATISTICS, EVALUATOR, FITNESS, TOPOLOGY COORDINATES ==
+
     result: dict[str, Any] = {'best': {}, 'history': []}
     stats_collector: dict[str, StatsCollectorSingle] = {'train': StatsCollectorSingle(objective_name='RMSE', revert_sign=False),
                                                         'test': StatsCollectorSingle(objective_name='RMSE', revert_sign=False)}
     
     # == ALL POSSIBLE NEIGHBORHOODS ==
+
     if len(pop_shape) > 1 and not is_tournament_selection:
         all_possible_coordinates: list[tuple[int, ...]] = [elem for elem in itertools.product(*[list(range(s)) for s in pop_shape])]
     else:
@@ -250,6 +252,20 @@ def __ca_inspired_gsgp(
             all_neighborhoods_indices[coordinate] = curr_neighs
     curr_neighs = None
     neigh_top_indices = None
+
+    # == WEIGHTS MATRIX FOR MORAN's I ==
+
+    weights_matrix_moran: list[list[float]] = SemanticDistance.zero_matrix(pop_size)
+    if not is_tournament_selection:
+        for i in range(pop_size):
+            coordinate_i: tuple[int, ...] = all_possible_coordinates[i]
+            neigh_indices_of_i: list[tuple[int, ...]] = all_neighborhoods_indices[coordinate_i]
+            for j in range(pop_size):
+                coordinate_j: tuple[int, ...] = all_possible_coordinates[j]
+                if i != j and coordinate_j in neigh_indices_of_i:
+                    weights_matrix_moran[i][j] = 1.0
+    else:
+        weights_matrix_moran = SemanticDistance.one_matrix_zero_diagonal(pop_size)
 
     # ===========================
     # INITIALIZATION
@@ -276,7 +292,8 @@ def __ca_inspired_gsgp(
             gen_verbosity_level=gen_verbosity_level,
             result=result,
             train_set=train_set,
-            test_set=test_set
+            test_set=test_set,
+            weights_matrix_moran=weights_matrix_moran
         )
         fit_values_train: list[float] = tt[0]['train']
         fit_values_test: list[float] = tt[0]['test']
@@ -377,7 +394,8 @@ def __ca_inspired_gsgp(
             gen_verbosity_level=gen_verbosity_level,
             result=result,
             train_set=train_set,
-            test_set=test_set
+            test_set=test_set,
+            weights_matrix_moran=weights_matrix_moran
         )
     
 
@@ -397,6 +415,7 @@ def __fitness_evaluation_and_update_statistics_and_result(
     result: dict[str, Any],
     train_set: tuple[np.ndarray, np.ndarray],
     test_set: tuple[np.ndarray, np.ndarray],
+    weights_matrix_moran: list[list[float]]
 ) -> tuple[dict[str, list[float]], int]:
     
     # ===========================
@@ -438,10 +457,15 @@ def __fitness_evaluation_and_update_statistics_and_result(
 
     min_value: float = min(fit_values_dict['train'])
     index_of_min_value: int = fit_values_dict['train'].index(min_value)
+    best_tree_in_this_gen: Node = pop[index_of_min_value][0]
     best_ind_here_totally: dict[str, Any] = {
         'Fitness': {'Train RMSE': min_value, 'Test RMSE': fit_values_dict['test'][index_of_min_value]},
         'PopIndex': index_of_min_value,
-        'Generation': current_gen
+        'Generation': current_gen,
+        'NNodes': best_tree_in_this_gen.get_n_nodes(),
+        'Height': best_tree_in_this_gen.get_height(),
+        'NNodesHeight': float(best_tree_in_this_gen.get_n_nodes()) / float(best_tree_in_this_gen.get_height() + 1),
+        'HeightNNodes': float(best_tree_in_this_gen.get_height() + 1) / float(best_tree_in_this_gen.get_n_nodes())
     }
 
     if len(result['best']) == 0:
@@ -450,11 +474,21 @@ def __fitness_evaluation_and_update_statistics_and_result(
         if best_ind_here_totally['Fitness']['Train RMSE'] < result['best']['Fitness']['Train RMSE']:
             result['best'] = best_ind_here_totally
     
+    all_n_nodes_in_this_gen: list[float] = [float(pop[i][0].get_n_nodes()) for i in range(pop_size)]
+    all_height_in_this_gen: list[float] = [float(pop[i][0].get_height()) for i in range(pop_size)]
+    all_n_nodes_height_in_this_gen: list[float] = [float(pop[i][0].get_n_nodes()) / float(pop[i][0].get_height() + 1) for i in range(pop_size)]
+    all_height_n_nodes_in_this_gen: list[float] = [float(pop[i][0].get_height() + 1) / float(pop[i][0].get_n_nodes()) for i in range(pop_size)]
+
     result['history'].append(
         {kk: result['best'][kk] for kk in result['best']}
         |
         {   
-            'EuclideanDistanceStats': SemanticDistance.compute_stats_all_distinct_distances(semantic_vectors)
+            'EuclideanDistanceStats': SemanticDistance.compute_stats_all_distinct_distances(semantic_vectors),
+            'GlobalMoranI': SemanticDistance.global_moran_I(semantic_vectors, weights_matrix_moran),
+            'NNodesStats': SemanticDistance.compute_stats(all_n_nodes_in_this_gen),
+            'HeightStats': SemanticDistance.compute_stats(all_height_in_this_gen),
+            'NNodesHeightStats': SemanticDistance.compute_stats(all_n_nodes_height_in_this_gen),
+            'HeightNNodesStats': SemanticDistance.compute_stats(all_height_n_nodes_in_this_gen)
         }
     )
 
