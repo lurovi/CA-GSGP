@@ -7,6 +7,34 @@ class SemanticDistance:
         super().__init__()
     
     @staticmethod
+    def one_matrix_zero_diagonal(N: int) -> list[list[float]]:
+        return [ [0.0 if i == j else 1.0 for j in range(N)] for i in range(N)]
+    
+    @staticmethod
+    def one_matrix(N: int) -> list[list[float]]:
+        return [ [1.0 for j in range(N)] for i in range(N)]
+    
+    @staticmethod
+    def zero_matrix(N: int) -> list[list[float]]:
+        return [ [0.0 for j in range(N)] for i in range(N)]
+
+    @staticmethod
+    def sum_of_all_elem_in_matrix(v: list[list[float]]) -> float:
+        return float(sum([sum(l) for l in v]))
+
+    @staticmethod
+    def sum_of_all_elem_in_numpy_matrix(v: np.ndarray) -> float:
+        return float(np.sum(v))
+    
+    @staticmethod
+    def dot_product(v1: np.ndarray, v2: np.ndarray) -> float:
+        return float(np.dot(v1, v2))
+    
+    @staticmethod
+    def self_dot_product(v1: np.ndarray) -> float:
+        return float(np.dot(v1, v1))
+
+    @staticmethod
     def euclidean_distance(v1: np.ndarray, v2: np.ndarray) -> float:
         return float(np.sqrt(np.sum(np.square(v1 - v2))))
     
@@ -15,11 +43,29 @@ class SemanticDistance:
         return float(np.dot(v1,v2)/(np.linalg.norm(v1) * np.linalg.norm(v2)))
     
     @staticmethod
+    def geometric_center(vectors: list[np.ndarray]) -> np.ndarray:
+        semantic_matrix: np.ndarray = np.stack(vectors, axis=0)
+        return np.mean(semantic_matrix, axis=0)
+
+    @staticmethod
+    def global_moran_I(vectors: list[np.ndarray], w: list[list[float]]) -> float:
+        N: int = len(vectors)
+        W: float = SemanticDistance.sum_of_all_elem_in_matrix(w)
+        gc: np.ndarray = SemanticDistance.geometric_center(vectors)
+
+        numerator: float = sum([ sum([w[i][j] * SemanticDistance.dot_product(vectors[i] - gc, vectors[j] - gc) for j in range(N)]) for i in range(N)])
+        
+        denominator: float = sum([SemanticDistance.self_dot_product(vectors[i] - gc) for i in range(N)])
+        denominator = denominator if denominator != 0 else 1e-12
+
+        return ( float(N) / W ) * (numerator / denominator)
+
+    @staticmethod
     def compute_multi_euclidean_distance_from_list(vectors: list[np.ndarray]) -> float:
         semantic_matrix: np.ndarray = np.stack(vectors, axis=0)
         multi_population_semantic_distance: float = float(np.sqrt(np.sum(np.var(semantic_matrix, axis=0))))
         return multi_population_semantic_distance
-
+    
     @staticmethod
     def compute_distances_between_vector_at_index_and_rest_of_the_list(idx: int, vectors: list[np.ndarray]) -> list[float]:
         if not 0 <= idx < len(vectors):
