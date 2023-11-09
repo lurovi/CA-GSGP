@@ -4,6 +4,37 @@ from cagsgp.nsgp.structure.RowMajorLine import RowMajorLine
 from statsmodels.sandbox.stats.multicomp import multipletests
 import numpy as np
 
+from genepro.node import Node
+from genepro.node_impl import Plus, Minus, Times, Div
+
+from collections.abc import Callable
+import itertools
+import time
+from typing import Any
+
+from numpy.random import Generator
+from prettytable import PrettyTable
+from cagsgp.benchmark.DatasetGenerator import DatasetGenerator
+from cagsgp.nsgp.stat.SemanticDistance import SemanticDistance
+
+from cagsgp.nsgp.stat.StatsCollectorSingle import StatsCollectorSingle
+from cagsgp.nsgp.structure.NeighborsTopology import NeighborsTopology
+from cagsgp.nsgp.structure.TreeStructure import TreeStructure
+from cagsgp.nsgp.structure.factory.NeighborsTopologyFactory import NeighborsTopologyFactory
+from cagsgp.nsgp.structure.factory.RowMajorCubeFactory import RowMajorCubeFactory
+from cagsgp.nsgp.structure.factory.RowMajorLineFactory import RowMajorLineFactory
+from cagsgp.nsgp.structure.factory.RowMajorMatrixFactory import RowMajorMatrixFactory
+from cagsgp.nsgp.structure.factory.TournamentTopologyFactory import TournamentTopologyFactory
+from cagsgp.util.EvaluationMetrics import EvaluationMetrics
+from cagsgp.util.ResultUtils import ResultUtils
+from genepro.node import Node
+
+import numpy as np
+import random
+
+from genepro.node_impl import Constant
+
+
 
 if __name__ == '__main__':
     l: list[int] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
@@ -29,3 +60,48 @@ if __name__ == '__main__':
     
     # Print the adjusted p-values themselves 
     print(pvals_corrected_bonferroni)
+
+    # ==================
+
+    m: float = 0.0
+    max_depth: int = 6
+    elitism: bool = True
+    generation_strategy: str = 'half'
+    crossover_probability: float = 0.90
+    mutation_probability: float = 0.50
+    duplicates_elimination: str = 'nothing'
+
+    operators: list[Node] = [Plus(fix_properties=True), Minus(fix_properties=True), Times(fix_properties=True), Div(fix_properties=True)]
+    low_erc: float = -100.0
+    high_erc: float = 100.0 + 1e-8
+    n_constants: int = 100
+
+    generator: Generator = np.random.default_rng(1)
+    random.seed(1)
+    np.random.seed(1)
+    
+    if low_erc > high_erc:
+        raise AttributeError(f"low erc is higher than high erc.")
+    elif low_erc < high_erc:
+        ephemeral_func: Callable = lambda: generator.uniform(low=low_erc, high=high_erc)
+    else:
+        ephemeral_func: Callable = None
+
+    if n_constants > 0:
+        constants: list[Constant] = [Constant(round(ephemeral_func(), 2)) for _ in range(n_constants)]
+
+    structure: TreeStructure = TreeStructure(operators=operators,
+                                                fixed_constants=constants if n_constants > 0 else None,
+                                                ephemeral_func=ephemeral_func if n_constants == 0 else None,
+                                                n_features=4,
+                                                max_depth=max_depth,
+                                                generation_strategy=generation_strategy)
+
+    for _ in range(4):
+        a: Node = structure.generate_tree()
+    
+    print(a.get_readable_repr())
+    print(a.get_n_nodes())
+    print(a.get_height())
+    print(a.get_n_nodes() / float(a.get_height() + 1))
+    print((a.get_height() + 1) / float(a.get_n_nodes()))
