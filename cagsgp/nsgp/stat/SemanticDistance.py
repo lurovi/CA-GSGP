@@ -59,6 +59,17 @@ class SemanticDistance:
         denominator = denominator if denominator != 0 else 1e-12
 
         return ( float(N) / W ) * (numerator / denominator)
+    
+    @staticmethod
+    def global_moran_I_coef(vectors: list[np.ndarray], w: list[list[float]], coef: float) -> float:
+        gc: np.ndarray = SemanticDistance.geometric_center(vectors)
+
+        numerator: float = sum([ sum([w[i][j] * SemanticDistance.dot_product(vectors[i] - gc, vectors[j] - gc) for j in range(N)]) for i in range(N)])
+        
+        denominator: float = sum([SemanticDistance.self_dot_product(vectors[i] - gc) for i in range(N)])
+        denominator = denominator if denominator != 0 else 1e-12
+
+        return coef * (numerator / denominator)
 
     @staticmethod
     def compute_multi_euclidean_distance_from_list(vectors: list[np.ndarray]) -> float:
@@ -122,3 +133,19 @@ class SemanticDistance:
         stats['q3'] = float(np.percentile(distances, 75))
 
         return stats
+    
+    @staticmethod
+    def compute_stats_only_integer(values: list[int]) -> dict[str, int]:
+        stats: dict[str, int] = {}
+        sorted_values: list[int] = sorted(values, reverse=False)
+
+        stats['mean'] = sum(values) // len(values)
+        stats['median'] = sorted_values[len(values) // 2]
+        stats['max'] = sorted_values[-1]
+        stats['min'] = sorted_values[0]
+        stats['var'] = 0
+        stats['q1'] = sorted_values[int(len(values) * 0.25)]
+        stats['q3'] = sorted_values[int(len(values) * 0.75)]
+
+        return stats
+    
