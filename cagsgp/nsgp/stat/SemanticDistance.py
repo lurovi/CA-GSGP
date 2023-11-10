@@ -62,6 +62,7 @@ class SemanticDistance:
     
     @staticmethod
     def global_moran_I_coef(vectors: list[np.ndarray], w: list[list[float]], coef: float) -> float:
+        N: int = len(vectors)
         gc: np.ndarray = SemanticDistance.geometric_center(vectors)
 
         numerator: float = sum([ sum([w[i][j] * SemanticDistance.dot_product(vectors[i] - gc, vectors[j] - gc) for j in range(N)]) for i in range(N)])
