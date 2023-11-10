@@ -1,5 +1,6 @@
 from collections.abc import Callable
 import itertools
+import math
 import time
 from typing import Any
 
@@ -266,6 +267,7 @@ def __ca_inspired_gsgp(
                     weights_matrix_moran[i][j] = 1.0
     else:
         weights_matrix_moran = SemanticDistance.one_matrix_zero_diagonal(pop_size)
+    moran_formula_coef: float = float(pop_size) / SemanticDistance.sum_of_all_elem_in_matrix(weights_matrix_moran)
 
     # ===========================
     # INITIALIZATION
@@ -293,7 +295,8 @@ def __ca_inspired_gsgp(
             result=result,
             train_set=train_set,
             test_set=test_set,
-            weights_matrix_moran=weights_matrix_moran
+            weights_matrix_moran=weights_matrix_moran,
+            moran_formula_coef=moran_formula_coef
         )
         fit_values_train: list[float] = tt[0]['train']
         fit_values_test: list[float] = tt[0]['test']
@@ -395,7 +398,8 @@ def __ca_inspired_gsgp(
             result=result,
             train_set=train_set,
             test_set=test_set,
-            weights_matrix_moran=weights_matrix_moran
+            weights_matrix_moran=weights_matrix_moran,
+            moran_formula_coef=moran_formula_coef
         )
     
 
@@ -415,7 +419,8 @@ def __fitness_evaluation_and_update_statistics_and_result(
     result: dict[str, Any],
     train_set: tuple[np.ndarray, np.ndarray],
     test_set: tuple[np.ndarray, np.ndarray],
-    weights_matrix_moran: list[list[float]]
+    weights_matrix_moran: list[list[float]],
+    moran_formula_coef: float
 ) -> tuple[dict[str, list[float]], int]:
     
     # ===========================
@@ -462,10 +467,10 @@ def __fitness_evaluation_and_update_statistics_and_result(
         'Fitness': {'Train RMSE': min_value, 'Test RMSE': fit_values_dict['test'][index_of_min_value]},
         'PopIndex': index_of_min_value,
         'Generation': current_gen,
-        'NNodes': best_tree_in_this_gen.get_n_nodes(),
-        'Height': best_tree_in_this_gen.get_height(),
-        'NNodesHeight': float(best_tree_in_this_gen.get_n_nodes()) / float(best_tree_in_this_gen.get_height() + 1),
-        'HeightNNodes': float(best_tree_in_this_gen.get_height() + 1) / float(best_tree_in_this_gen.get_n_nodes())
+        'LogNNodes': math.log(best_tree_in_this_gen.get_n_nodes(), 10),
+        'Height': best_tree_in_this_gen.get_height()
+        #'NNodesHeight': float(best_tree_in_this_gen.get_n_nodes()) / float(best_tree_in_this_gen.get_height() + 1),
+        #'HeightNNodes': float(best_tree_in_this_gen.get_height() + 1) / float(best_tree_in_this_gen.get_n_nodes())
     }
 
     if len(result['best']) == 0:
@@ -474,21 +479,21 @@ def __fitness_evaluation_and_update_statistics_and_result(
         if best_ind_here_totally['Fitness']['Train RMSE'] < result['best']['Fitness']['Train RMSE']:
             result['best'] = best_ind_here_totally
     
-    all_n_nodes_in_this_gen: list[float] = [float(pop[i][0].get_n_nodes()) for i in range(pop_size)]
+    all_n_nodes_in_this_gen: list[float] = [math.log(pop[i][0].get_n_nodes(), 10) for i in range(pop_size)]
     all_height_in_this_gen: list[float] = [float(pop[i][0].get_height()) for i in range(pop_size)]
-    all_n_nodes_height_in_this_gen: list[float] = [float(pop[i][0].get_n_nodes()) / float(pop[i][0].get_height() + 1) for i in range(pop_size)]
-    all_height_n_nodes_in_this_gen: list[float] = [float(pop[i][0].get_height() + 1) / float(pop[i][0].get_n_nodes()) for i in range(pop_size)]
+    #all_n_nodes_height_in_this_gen: list[float] = [float(pop[i][0].get_n_nodes()) / float(pop[i][0].get_height() + 1) for i in range(pop_size)]
+    #all_height_n_nodes_in_this_gen: list[float] = [float(pop[i][0].get_height() + 1) / float(pop[i][0].get_n_nodes()) for i in range(pop_size)]
 
     result['history'].append(
         {kk: result['best'][kk] for kk in result['best']}
         |
         {   
-            'EuclideanDistanceStats': SemanticDistance.compute_stats_all_distinct_distances(semantic_vectors),
-            'GlobalMoranI': SemanticDistance.global_moran_I(semantic_vectors, weights_matrix_moran),
-            'NNodesStats': SemanticDistance.compute_stats(all_n_nodes_in_this_gen),
-            'HeightStats': SemanticDistance.compute_stats(all_height_in_this_gen),
-            'NNodesHeightStats': SemanticDistance.compute_stats(all_n_nodes_height_in_this_gen),
-            'HeightNNodesStats': SemanticDistance.compute_stats(all_height_n_nodes_in_this_gen)
+            #'EuclideanDistanceStats': SemanticDistance.compute_stats_all_distinct_distances(semantic_vectors),
+            'GlobalMoranI': SemanticDistance.global_moran_I_coef(semantic_vectors, weights_matrix_moran, moran_formula_coef),
+            'LogNNodesStats': SemanticDistance.compute_stats(all_n_nodes_in_this_gen),
+            'HeightStats': SemanticDistance.compute_stats(all_height_in_this_gen)
+            #'NNodesHeightStats': SemanticDistance.compute_stats(all_n_nodes_height_in_this_gen),
+            #'HeightNNodesStats': SemanticDistance.compute_stats(all_height_n_nodes_in_this_gen)
         }
     )
 
