@@ -22,6 +22,7 @@ class SnsPlotUtils:
     def simple_line_plot_topology_split(
             folder_name: str,
             output_path: str,
+            mode: str,
             seed_list: list[int],
             torusdim_radius_shapes: list[tuple[int, int, tuple[int, ...]]],
             main_topology_name: str,
@@ -56,6 +57,7 @@ class SnsPlotUtils:
                     d: dict[str, Any] = ResultUtils.read_single_json_file(
                         folder_name=folder_name,
                         result_file_type='b',
+                        mode=mode,
                         pop_size=pop_size,
                         num_gen=num_gen,
                         max_depth=max_depth,
@@ -106,6 +108,7 @@ class SnsPlotUtils:
     def simple_box_plot_topology_split(
             folder_name: str,
             output_path: str,
+            mode: str,
             seed_list: list[int],
             torusdim_radius_shapes: list[tuple[int, int, tuple[int, ...]]],
             main_topology_name: str,
@@ -139,6 +142,7 @@ class SnsPlotUtils:
                     d: dict[str, Any] = ResultUtils.read_single_json_file(
                         folder_name=folder_name,
                         result_file_type='b',
+                        mode=mode,
                         pop_size=pop_size,
                         num_gen=num_gen,
                         max_depth=max_depth,
@@ -187,6 +191,7 @@ class SnsPlotUtils:
     def simple_heat_plot_topology_split_wilcoxon(
             folder_name: str,
             output_path: str,
+            mode: str,
             seed_list: list[int],
             torusdim_radius_shapes: list[tuple[int, int, tuple[int, ...]]],
             main_topology_name: str,
@@ -222,6 +227,7 @@ class SnsPlotUtils:
                         d: dict[str, Any] = ResultUtils.read_single_json_file(
                             folder_name=folder_name,
                             result_file_type='b',
+                            mode=mode,
                             pop_size=pop_size,
                             num_gen=num_gen,
                             max_depth=max_depth,
@@ -271,6 +277,7 @@ class SnsPlotUtils:
     def simple_line_plot_topology_single_split_type(
             folder_name: str,
             output_path: str,
+            mode: str,
             split_type: str,
             seed_list: list[int],
             torusdim_radius_shapes: list[tuple[int, int, tuple[int, ...]]],
@@ -317,6 +324,7 @@ class SnsPlotUtils:
                     d: dict[str, Any] = ResultUtils.read_single_json_file(
                         folder_name=folder_name,
                         result_file_type=result_file_type,
+                        mode=mode,
                         pop_size=pop_size,
                         num_gen=num_gen,
                         max_depth=max_depth,
@@ -371,6 +379,7 @@ class SnsPlotUtils:
     def simple_box_plot_topology_single_split_type(
             folder_name: str,
             output_path: str,
+            mode: str,
             split_type: str,
             seed_list: list[int],
             torusdim_radius_shapes: list[tuple[int, int, tuple[int, ...]]],
@@ -405,6 +414,7 @@ class SnsPlotUtils:
                     d: dict[str, Any] = ResultUtils.read_single_json_file(
                         folder_name=folder_name,
                         result_file_type='b',
+                        mode=mode,
                         pop_size=pop_size,
                         num_gen=num_gen,
                         max_depth=max_depth,
@@ -451,6 +461,7 @@ if __name__ == '__main__':
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
     output_path: str = codebase_folder + 'python_data/CA-GSGP/' + 'images_1' + '/'
 
+    mode: str = 'gsgp'
     pop_size: int = 900
     num_gen: int = 111
     competitor_rate: float = 0.6
@@ -461,6 +472,7 @@ if __name__ == '__main__':
     SnsPlotUtils.simple_line_plot_topology_single_split_type(folder_name=folder_name,
                                               output_path=output_path,
                                               split_type='Test',
+                                              mode=mode,
                                               seed_list=list(range(1, 100 + 1)), 
                                               torusdim_radius_shapes=[(0,4,(pop_size,)),
                                                                         (torus_dim,1,pop_shape),
@@ -487,6 +499,7 @@ if __name__ == '__main__':
     '''
     SnsPlotUtils.simple_box_plot_topology_single_split_type(folder_name=folder_name,
                                               output_path=output_path,
+                                              mode=mode,
                                               split_type='Test',
                                               seed_list=list(range(1, 100 + 1)), 
                                               torusdim_radius_shapes=[(0,4,(100,)),
@@ -515,6 +528,7 @@ if __name__ == '__main__':
     '''
     SnsPlotUtils.simple_line_plot_topology_split(folder_name=folder_name,
                                               output_path=output_path,
+                                              mode=mode,
                                               seed_list=list(range(1, 100 + 1)), 
                                               torusdim_radius_shapes=[(0,4,(100,)),
                                                                         (2,1,(10,10)),
@@ -541,6 +555,7 @@ if __name__ == '__main__':
     
     SnsPlotUtils.simple_box_plot_topology_split(folder_name=folder_name,
                                               output_path=output_path,
+                                              mode=mode,
                                               seed_list=list(range(1, 100 + 1)), 
                                               torusdim_radius_shapes=[(0,4,(100,)),
                                                                         (2,1,(10,10)),
@@ -566,6 +581,7 @@ if __name__ == '__main__':
     
     SnsPlotUtils.simple_heat_plot_topology_split_wilcoxon(folder_name=folder_name,
                                               output_path=output_path,
+                                              mode=mode,
                                               seed_list=list(range(1, 100 + 1)), 
                                               torusdim_radius_shapes=[(0,4,(100,)),
                                                                         (2,1,(10,10)),

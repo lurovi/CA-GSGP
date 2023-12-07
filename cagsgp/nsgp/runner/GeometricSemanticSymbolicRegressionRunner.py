@@ -28,6 +28,7 @@ from genepro.node_impl import Constant
 
     
 def run_symbolic_regression_with_cellular_automata_gsgp(
+    mode: str,
     pop_shape: tuple[int, ...],
     pop_size: int,
     num_gen: int,
@@ -102,12 +103,20 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
     # TREE STRUCTURE
     # ===========================
 
+    for oper in operators:
+        if mode == 'gsgp' or mode == 'gsgpgp':
+            oper.set_fix_properties(True)
+        elif mode == 'gp':
+            oper.set_fix_properties(False)
+        else:
+            raise AttributeError(f'Invalid mode ({mode}).')
+
     structure: TreeStructure = TreeStructure(operators=operators,
-                                                fixed_constants=constants if n_constants > 0 else None,
-                                                ephemeral_func=ephemeral_func if n_constants == 0 else None,
-                                                n_features=X_train.shape[1],
-                                                max_depth=max_depth,
-                                                generation_strategy=generation_strategy)
+                                            fixed_constants=constants if n_constants > 0 else None,
+                                            ephemeral_func=ephemeral_func if n_constants == 0 else None,
+                                            n_features=X_train.shape[1],
+                                            max_depth=max_depth,
+                                            generation_strategy=generation_strategy)
     constants = None
     ephemeral_func = None
     generator = None
@@ -140,6 +149,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
     start_time: float = time.time()
 
     res: dict[str, Any] = __ca_inspired_gsgp(
+        mode=mode,
         pop_size=pop_size,
         pop_shape=pop_shape,
         num_gen=num_gen,
@@ -171,6 +181,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
         result=res,
         objective_names=['RMSE'],
         seed=seed,
+        mode=mode,
         pop_size=pop_size,
         num_gen=num_gen,
         num_offsprings=pop_size,
@@ -192,14 +203,15 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
     )
     
     path_run_id: str = f'cmprate{str(round(competitor_rate, 2))}/{expl_pipe}/'
-    run_id: str = f"cgsgp-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-torus_dim_{torus_dim}-dataset_{dataset_name}-dupl_elim_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(crossover_probability, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-radius_{str(radius)}-pressure_{str(pressure)}-genstrat_{generation_strategy}-elitism_{str(int(elitism))}-SEED{seed}"
+    run_id: str = f"c{mode}-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-torus_dim_{torus_dim}-dataset_{dataset_name}-dupl_elim_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(crossover_probability, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-radius_{str(radius)}-pressure_{str(pressure)}-genstrat_{generation_strategy}-elitism_{str(int(elitism))}-SEED{seed}"
     if verbose:
-        print(f"\nSYMBOLIC TREES RMSE CA-GSGP SOO: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Torus Dim {torus_dim}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}, Crossover Probability {str(round(crossover_probability, 2))}, Mutation Probability {str(round(mutation_probability, 2))}, M {str(round(m, 2))}, CompetitorRate {str(round(competitor_rate, 2))}, Radius {str(radius)}, Pressure {str(pressure)}, Generation Strategy {generation_strategy}, Elitism {str(int(elitism))}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
+        print(f"\nSYMBOLIC TREES RMSE CA-{mode.upper()} SOO: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Torus Dim {torus_dim}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}, Crossover Probability {str(round(crossover_probability, 2))}, Mutation Probability {str(round(mutation_probability, 2))}, M {str(round(m, 2))}, CompetitorRate {str(round(competitor_rate, 2))}, Radius {str(radius)}, Pressure {str(pressure)}, Generation Strategy {generation_strategy}, Elitism {str(int(elitism))}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
     
     return pareto_front_df, path_run_id, run_id
 
 
 def __ca_inspired_gsgp(
+    mode: str,
     pop_size: int,
     pop_shape: int,
     num_gen: int,
@@ -286,6 +298,7 @@ def __ca_inspired_gsgp(
         # ===========================
         
         tt: tuple[dict[str, list[float]], int] = __fitness_evaluation_and_update_statistics_and_result(
+            mode=mode,
             pop=pop,
             pop_size=pop_size,
             stats_collector=stats_collector,
@@ -357,7 +370,12 @@ def __ca_inspired_gsgp(
             else:
                 # == CROSSOVER ==
                 if execute_crossover and random.random() < crossover_probability:
-                    cx_tree: Node = structure.geometric_semantic_single_tree_crossover(first_parent[0], second_parent[0], enable_caching=True, fix_properties=True)
+                    if mode == 'gsgp' or mode == 'gsgpgp':
+                        cx_tree: Node = structure.geometric_semantic_single_tree_crossover(first_parent[0], second_parent[0], enable_caching=True, fix_properties=True)
+                    elif mode == 'gp':
+                        cx_tree: Node = structure.safe_subtree_crossover_two_children(first_parent[0], second_parent[0])[0]
+                    else:
+                        raise AttributeError(f'Invalid mode ({mode}).')
                     new_tree: tuple[Node, dict[str, float]] = (cx_tree, {})
                 else:
                     new_tree: tuple[Node, dict[str, float]] = (first_parent[0], {'train': first_parent[1], 'test': first_parent[2]})
@@ -365,7 +383,12 @@ def __ca_inspired_gsgp(
                 # == MUTATION ==
                 if execute_mutation and random.random() < mutation_probability:
                     mutation_step: float = m if m != 0.0 else random.uniform(0.0, 1.0 + 1e-8)
-                    mut_tree: Node = structure.geometric_semantic_tree_mutation(new_tree[0], m=mutation_step, enable_caching=True, fix_properties=True)
+                    if mode == 'gsgp' or mode == 'gsgpgp':
+                        mut_tree: Node = structure.geometric_semantic_tree_mutation(new_tree[0], m=mutation_step, enable_caching=True, fix_properties=True)
+                    elif mode == 'gp':
+                        mut_tree: Node = structure.safe_subtree_mutation(new_tree[0])
+                    else:
+                        raise AttributeError(f'Invalid mode ({mode}).')
                     new_tree = (mut_tree, {})
                 
                 offsprings.append(new_tree)
@@ -389,6 +412,7 @@ def __ca_inspired_gsgp(
     # ===========================
 
     _ = __fitness_evaluation_and_update_statistics_and_result(
+            mode=mode,
             pop=pop,
             pop_size=pop_size,
             stats_collector=stats_collector,
@@ -410,6 +434,7 @@ def __ca_inspired_gsgp(
 
 
 def __fitness_evaluation_and_update_statistics_and_result(
+    mode: str,
     pop: list[tuple[Node, dict[str, float]]],
     pop_size: int,
     stats_collector: dict[str, StatsCollectorSingle],
@@ -473,6 +498,11 @@ def __fitness_evaluation_and_update_statistics_and_result(
         #'HeightNNodes': float(best_tree_in_this_gen.get_height() + 1) / float(best_tree_in_this_gen.get_n_nodes())
     }
 
+    if mode == 'gp':
+        best_ind_here_totally['Tree'] = TreeStructure.get_subtree_as_full_string(best_tree_in_this_gen)
+    else:
+        best_ind_here_totally['Tree'] = ''
+
     if len(result['best']) == 0:
         result['best'] = best_ind_here_totally
     else:
@@ -488,7 +518,7 @@ def __fitness_evaluation_and_update_statistics_and_result(
         {kk: result['best'][kk] for kk in result['best']}
         |
         {   
-            #'EuclideanDistanceStats': SemanticDistance.compute_stats_all_distinct_distances(semantic_vectors),
+            'EuclideanDistanceStats': SemanticDistance.compute_stats_all_distinct_distances(semantic_vectors),
             'GlobalMoranI': SemanticDistance.global_moran_I_coef(semantic_vectors, weights_matrix_moran, moran_formula_coef),
             'LogNNodesStats': SemanticDistance.compute_stats(all_n_nodes_in_this_gen),
             'HeightStats': SemanticDistance.compute_stats(all_height_in_this_gen)

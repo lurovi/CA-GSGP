@@ -21,6 +21,7 @@ from functools import partial
 
 
 def run_single_experiment(
+        mode: str,
         folder_name: str,
         dataset_name: str,
         dataset_path_folder: str,
@@ -51,6 +52,7 @@ def run_single_experiment(
     dataset_path: str = dataset_path_folder + dataset_name + '/'
     for seed in range(start_seed, end_seed + 1):
         t: tuple[dict[str, Any], str, str] = run_symbolic_regression_with_cellular_automata_gsgp(
+            mode=mode,
             pop_shape=pop_shape,
             pop_size=pop_size,
             num_gen=num_gen,
@@ -77,7 +79,7 @@ def run_single_experiment(
         )
         ResultUtils.write_result_to_json(path=folder_name, path_run_id=t[1], run_id=t[2], pareto_front_dict=t[0])
     
-    verbose_output: str = f'PopSize {pop_size} NumGen {num_gen} ExplPipe {expl_pipe} Dataset {dataset_name} Radius {radius} TorusDim {torus_dim} CompetitorRate {competitor_rate} COMPLETED'
+    verbose_output: str = f'Mode {mode} PopSize {pop_size} NumGen {num_gen} ExplPipe {expl_pipe} Dataset {dataset_name} Radius {radius} TorusDim {torus_dim} CompetitorRate {competitor_rate} COMPLETED'
     print(verbose_output)
     with open(folder_name + 'terminal_std_out.txt', 'a+') as terminal_std_out:
         terminal_std_out.write(verbose_output)
@@ -102,6 +104,7 @@ if __name__ == '__main__':
     # COMMON AND FIXED PARAMETERS
     # ===========================
 
+    mode: str = 'gsgp'
     m: float = 0.0
     max_depth: int = 6
     elitism: bool = True
@@ -110,7 +113,7 @@ if __name__ == '__main__':
     mutation_probability: float = 0.50
     duplicates_elimination: str = 'nothing'
 
-    operators: list[Node] = [Plus(fix_properties=True), Minus(fix_properties=True), Times(fix_properties=True), Div(fix_properties=True)]
+    operators: list[Node] = [Plus(), Minus(), Times(), Div()]
     low_erc: float = -100.0
     high_erc: float = 100.0 + 1e-8
     n_constants: int = 100
@@ -193,6 +196,7 @@ if __name__ == '__main__':
         parallel_func: Callable = partial(run_single_experiment,
                                             folder_name=folder_name,
                                             dataset_path_folder=dataset_path_folder,
+                                            mode=mode,
                                             max_depth=max_depth,
                                             generation_strategy=generation_strategy,
                                             operators=operators,
