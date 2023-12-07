@@ -1,7 +1,7 @@
 from cagsgp.nsgp.structure.RowMajorMatrix import RowMajorMatrix
 from cagsgp.nsgp.structure.RowMajorCube import RowMajorCube
 from cagsgp.nsgp.structure.RowMajorLine import RowMajorLine
-from statsmodels.sandbox.stats.multicomp import multipletests
+#from statsmodels.sandbox.stats.multicomp import multipletests
 import numpy as np
 
 from genepro.node import Node
@@ -28,12 +28,16 @@ from cagsgp.nsgp.structure.factory.TournamentTopologyFactory import TournamentTo
 from cagsgp.util.EvaluationMetrics import EvaluationMetrics
 from cagsgp.util.ResultUtils import ResultUtils
 from genepro.node import Node
-
+import pandas as pd
 import numpy as np
 import random
 
 from genepro.node_impl import Constant
 
+def add_generation_column(n: int, path: str, output_file:str ) -> None:
+    df: pd.DataFrame = pd.read_csv(path, sep=" ")
+    df['Generation'] = df.reset_index().index
+    df.to_csv(output_file, sep=' ', index=False)
 
 
 if __name__ == '__main__':

@@ -302,7 +302,7 @@ class SnsPlotUtils:
             file_name: str = 'lineplot'+'-'+split_type+'-'+dataset_name+'-'+main_topology_name+'.svg'
             #file_name: str = 'lineplot'+'-'+split_type+'-'+dataset_name+'-'+main_topology_name+'.png'
             
-            result_file_type: str = 'tr'
+            result_file_type: str = 'b'
             if result_file_type == 'b':
                 name_of_the_first_key: str = 'history'
             elif result_file_type == 'tr':
@@ -342,7 +342,12 @@ class SnsPlotUtils:
                         data['Topology'].append(StringUtils.concat('TD', str(torus_dim))+'-'+str(radius))
                         #data['Best RMSE'].append(d['Fitness'][split_type+' RMSE']) # Test RMSE preso dal file che inizia con b
                         #data['Best RMSE'].append(d['EuclideanDistanceStats']['median']) # distance euclidea mediana presa dal file che inizia con b
-                        data['Best RMSE'].append(d['RMSE']['median']) # la fitness mediana sul train di tutti gli individui nella popolazione presa dal file che inizia con tr 
+                        #data['Best RMSE'].append(d['Height']) # height preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['LogNNodes']) # log nnodes preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['HeightStats']['median']) # height pop stats median preso dal file che inizia con b
+                        data['Best RMSE'].append(d['LogNNodesStats']['median']) # log nnodes pop stats median preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['GlobalMoranI']) # global moran I preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['RMSE']['median']) # la fitness mediana sul train di tutti gli individui nella popolazione presa dal file che inizia con tr 
                     history = None
 
             data: pd.DataFrame = pd.DataFrame(data)
