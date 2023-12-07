@@ -75,6 +75,7 @@ class ResultUtils:
         objective_names: list[str],
         seed: int,
         mode: str,
+        linear_scaling: bool,
         pop_size: int,
         num_gen: int,
         num_offsprings: int,
@@ -103,6 +104,7 @@ class ResultUtils:
                                              "test_statistics": result['test_statistics']
                                              }
         
+        pareto_front_dict["parameters"]["LinearScaling"] = int(linear_scaling)
         pareto_front_dict["parameters"]["Mode"] = mode
         pareto_front_dict["parameters"]["PopSize"] = pop_size
         pareto_front_dict["parameters"]["NumGen"] = num_gen
@@ -145,6 +147,7 @@ class ResultUtils:
         folder_name: str,
         result_file_type: str,
         mode: str,
+        linear_scaling: bool,
         pop_size: int,
         num_gen: int,
         max_depth: int,
@@ -173,7 +176,7 @@ class ResultUtils:
         elitism_str: str = str(int(elitism))
         seed_str: str = str(seed)
         
-        path_run_id: str = f'cmprate{cmprate}/{expl_pipe}/'
+        path_run_id: str = f'linearscaling{int(linear_scaling)}/cmprate{cmprate}/{expl_pipe}/'
         run_id: str = f"c{mode}-popsize_{str(pop_size)}-numgen_{str(num_gen)}-maxdepth_{str(max_depth)}-torus_dim_{str(torus_dim)}-dataset_{dataset_name}-dupl_elim_{duplicates_elimination}-pop_shape_{pop_shape_str}-crossprob_{crossprob}-mutprob_{mutprob}-m_{m_str}-radius_{radius_str}-pressure_{pressure_str}-genstrat_{generation_strategy}-elitism_{elitism_str}-SEED{seed_str}"
 
         with open(folder_name + path_run_id + result_file_type + run_id + '.json', 'r') as f:

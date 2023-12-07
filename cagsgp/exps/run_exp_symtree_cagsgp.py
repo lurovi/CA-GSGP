@@ -22,6 +22,7 @@ from functools import partial
 
 def run_single_experiment(
         mode: str,
+        linear_scaling: bool,
         folder_name: str,
         dataset_name: str,
         dataset_path_folder: str,
@@ -53,6 +54,7 @@ def run_single_experiment(
     for seed in range(start_seed, end_seed + 1):
         t: tuple[dict[str, Any], str, str] = run_symbolic_regression_with_cellular_automata_gsgp(
             mode=mode,
+            linear_scaling=linear_scaling,
             pop_shape=pop_shape,
             pop_size=pop_size,
             num_gen=num_gen,
@@ -105,6 +107,7 @@ if __name__ == '__main__':
     # ===========================
 
     mode: str = 'gsgp'
+    linear_scaling: bool = False
     m: float = 0.0
     max_depth: int = 6
     elitism: bool = True
@@ -197,6 +200,7 @@ if __name__ == '__main__':
                                             folder_name=folder_name,
                                             dataset_path_folder=dataset_path_folder,
                                             mode=mode,
+                                            linear_scaling=linear_scaling,
                                             max_depth=max_depth,
                                             generation_strategy=generation_strategy,
                                             operators=operators,

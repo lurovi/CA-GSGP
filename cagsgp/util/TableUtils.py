@@ -17,6 +17,7 @@ class TableUtils:
             folder_name: str,
             seed_list: list[int],
             mode: str,
+            linear_scaling: bool,
             torusdim_radius_shapes: list[tuple[int, int, tuple[int, ...]]],
             dataset_names: list[str],
             pop_size: int,
@@ -49,6 +50,7 @@ class TableUtils:
                 d: dict[str, Any] = ResultUtils.read_single_json_file(
                     folder_name=folder_name,
                     mode=mode,
+                    linear_scaling=linear_scaling,
                     result_file_type='b',
                     pop_size=pop_size,
                     num_gen=num_gen,
@@ -84,6 +86,7 @@ class TableUtils:
                     d: dict[str, Any] = ResultUtils.read_single_json_file(
                         folder_name=folder_name,
                         mode=mode,
+                        linear_scaling=linear_scaling,
                         result_file_type='b',
                         pop_size=pop_size,
                         num_gen=num_gen,
@@ -135,6 +138,7 @@ class TableUtils:
     def print_table_wilcoxon_medianrmse_datasets_cellular_vs_tournament_for_single_split_type(
             folder_name: str,
             mode: str,
+            linear_scaling: bool,
             split_type: str,
             seed_list: list[int],
             tournament_pressures: list[int],
@@ -175,6 +179,7 @@ class TableUtils:
                     d: dict[str, Any] = ResultUtils.read_single_json_file(
                         folder_name=folder_name,
                         mode=mode,
+                        linear_scaling=linear_scaling,
                         result_file_type='b',
                         pop_size=pop_size,
                         num_gen=num_gen,
@@ -210,6 +215,7 @@ class TableUtils:
                         folder_name=folder_name,
                         result_file_type='b',
                         mode=mode,
+                        linear_scaling=linear_scaling,
                         pop_size=pop_size,
                         num_gen=num_gen,
                         max_depth=max_depth,
@@ -315,6 +321,7 @@ if __name__ == '__main__':
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
 
+    linear_scaling: bool = False
     mode: str = 'gsgp'
     pop_size: int = 100
     num_gen: int = 1000
@@ -327,6 +334,7 @@ if __name__ == '__main__':
     TableUtils.print_table_wilcoxon_medianrmse_datasets_cellular_vs_tournament_for_single_split_type(folder_name=folder_name,
                                               split_type='Test',
                                               mode=mode,
+                                              linear_scaling=linear_scaling,
                                               seed_list=list(range(1, 100 + 1)),
                                               tournament_pressures=[],
                                               bonferroni_correction=True,

@@ -29,6 +29,7 @@ from genepro.node_impl import Constant
     
 def run_symbolic_regression_with_cellular_automata_gsgp(
     mode: str,
+    linear_scaling: bool,
     pop_shape: tuple[int, ...],
     pop_size: int,
     num_gen: int,
@@ -150,6 +151,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
 
     res: dict[str, Any] = __ca_inspired_gsgp(
         mode=mode,
+        linear_scaling=linear_scaling,
         pop_size=pop_size,
         pop_shape=pop_shape,
         num_gen=num_gen,
@@ -182,6 +184,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
         objective_names=['RMSE'],
         seed=seed,
         mode=mode,
+        linear_scaling=linear_scaling,
         pop_size=pop_size,
         num_gen=num_gen,
         num_offsprings=pop_size,
@@ -202,7 +205,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
         duplicates_elimination=duplicates_elimination
     )
     
-    path_run_id: str = f'cmprate{str(round(competitor_rate, 2))}/{expl_pipe}/'
+    path_run_id: str = f'linearscaling{int(linear_scaling)}/cmprate{str(round(competitor_rate, 2))}/{expl_pipe}/'
     run_id: str = f"c{mode}-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-torus_dim_{torus_dim}-dataset_{dataset_name}-dupl_elim_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(crossover_probability, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-radius_{str(radius)}-pressure_{str(pressure)}-genstrat_{generation_strategy}-elitism_{str(int(elitism))}-SEED{seed}"
     if verbose:
         print(f"\nSYMBOLIC TREES RMSE CA-{mode.upper()} SOO: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Torus Dim {torus_dim}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}, Crossover Probability {str(round(crossover_probability, 2))}, Mutation Probability {str(round(mutation_probability, 2))}, M {str(round(m, 2))}, CompetitorRate {str(round(competitor_rate, 2))}, Radius {str(radius)}, Pressure {str(pressure)}, Generation Strategy {generation_strategy}, Elitism {str(int(elitism))}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
@@ -212,6 +215,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
 
 def __ca_inspired_gsgp(
     mode: str,
+    linear_scaling: bool,
     pop_size: int,
     pop_shape: int,
     num_gen: int,
@@ -299,6 +303,7 @@ def __ca_inspired_gsgp(
         
         tt: tuple[dict[str, list[float]], int] = __fitness_evaluation_and_update_statistics_and_result(
             mode=mode,
+            linear_scaling=linear_scaling,
             pop=pop,
             pop_size=pop_size,
             stats_collector=stats_collector,
@@ -413,6 +418,7 @@ def __ca_inspired_gsgp(
 
     _ = __fitness_evaluation_and_update_statistics_and_result(
             mode=mode,
+            linear_scaling=linear_scaling,
             pop=pop,
             pop_size=pop_size,
             stats_collector=stats_collector,
@@ -435,6 +441,7 @@ def __ca_inspired_gsgp(
 
 def __fitness_evaluation_and_update_statistics_and_result(
     mode: str,
+    linear_scaling: bool,
     pop: list[tuple[Node, dict[str, float]]],
     pop_size: int,
     stats_collector: dict[str, StatsCollectorSingle],
@@ -453,6 +460,7 @@ def __fitness_evaluation_and_update_statistics_and_result(
     # ===========================
 
     tt: tuple[dict[str, list[float]], list[np.ndarray]] = __compute_single_RMSE_value_and_replace(
+            linear_scaling=linear_scaling,
             pop=pop,
             pop_size=pop_size,
             X_train=train_set[0],
@@ -530,7 +538,7 @@ def __fitness_evaluation_and_update_statistics_and_result(
     return (fit_values_dict, index_of_min_value)
 
 
-def __compute_single_RMSE_value_and_replace(pop: list[tuple[Node, dict[str, float]]], pop_size: int, X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray, y_test: np.ndarray) -> tuple[dict[str, list[float]], list[np.ndarray]]:
+def __compute_single_RMSE_value_and_replace(linear_scaling: bool, pop: list[tuple[Node, dict[str, float]]], pop_size: int, X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray, y_test: np.ndarray) -> tuple[dict[str, list[float]], list[np.ndarray]]:
     fit_values_dict: dict[str, list[float]] = {'train': [], 'test': []}
     semantic_vectors: list[np.ndarray] = []
 
@@ -546,8 +554,15 @@ def __compute_single_RMSE_value_and_replace(pop: list[tuple[Node, dict[str, floa
         else:
             # This individual has never been evaluated, need to compute its fitness
             p_test: np.ndarray = np.core.umath.clip(current_tree(X_test, dataset_type='test'), -1e+10, 1e+10)
-            train_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y_train, p=p_train, linear_scaling=False, slope=None, intercept=None)
-            test_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y_test, p=p_test, linear_scaling=False, slope=None, intercept=None)
+
+            if linear_scaling:
+                slope, intercept = EvaluationMetrics.compute_linear_scaling(y=y_train, p=p_train)
+                train_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y_train, p=p_train, linear_scaling=False, slope=slope, intercept=intercept)
+                test_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y_test, p=p_test, linear_scaling=False, slope=slope, intercept=intercept)
+            else:
+                train_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y_train, p=p_train, linear_scaling=False, slope=None, intercept=None)
+                test_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y_test, p=p_test, linear_scaling=False, slope=None, intercept=None)
+            
             new_fitness: dict[str, float] = {'train': train_fitness, 'test': test_fitness}
             pop[i] = (current_tree, new_fitness)
         fit_values_dict['train'].append(new_fitness['train'])
