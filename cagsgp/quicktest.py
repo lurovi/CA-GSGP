@@ -1,7 +1,7 @@
 from cagsgp.nsgp.structure.RowMajorMatrix import RowMajorMatrix
 from cagsgp.nsgp.structure.RowMajorCube import RowMajorCube
 from cagsgp.nsgp.structure.RowMajorLine import RowMajorLine
-#from statsmodels.sandbox.stats.multicomp import multipletests
+from statsmodels.sandbox.stats.multicomp import multipletests
 import numpy as np
 
 from genepro.node import Node
