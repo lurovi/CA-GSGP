@@ -103,20 +103,20 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
     # TREE STRUCTURE
     # ===========================
 
-    for oper in operators:
-        if mode == 'gsgp' or mode == 'gsgpgp':
-            oper.set_fix_properties(True)
-        elif mode == 'gp':
-            oper.set_fix_properties(False)
-        else:
-            raise AttributeError(f'Invalid mode ({mode}).')
-
     structure: TreeStructure = TreeStructure(operators=operators,
                                             fixed_constants=constants if n_constants > 0 else None,
                                             ephemeral_func=ephemeral_func if n_constants == 0 else None,
                                             n_features=X_train.shape[1],
                                             max_depth=max_depth,
                                             generation_strategy=generation_strategy)
+    
+    if mode == 'gsgp' or mode == 'gsgpgp':
+        structure.set_fix_properties(True)
+    elif mode == 'gp':
+        structure.set_fix_properties(False)
+    else:
+        raise AttributeError(f'Invalid mode ({mode}).')
+    
     constants = None
     ephemeral_func = None
     generator = None
