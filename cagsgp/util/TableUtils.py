@@ -22,6 +22,7 @@ class TableUtils:
             dataset_names: list[str],
             pop_size: int,
             num_gen: int,
+            num_gen_post: int,
             last_gen: int,
             max_depth: int,
             expl_pipe: str,
@@ -54,6 +55,7 @@ class TableUtils:
                     result_file_type='b',
                     pop_size=pop_size,
                     num_gen=num_gen,
+                    num_gen_post=num_gen_post,
                     max_depth=max_depth,
                     torus_dim=0,
                     dataset_name=dataset_name,
@@ -90,6 +92,7 @@ class TableUtils:
                         result_file_type='b',
                         pop_size=pop_size,
                         num_gen=num_gen,
+                        num_gen_post=num_gen_post,
                         max_depth=max_depth,
                         torus_dim=torus_dim,
                         dataset_name=dataset_name,
@@ -148,6 +151,7 @@ class TableUtils:
             dataset_names: list[str],
             pop_size: int,
             num_gen: int,
+            num_gen_post: int,
             last_gen: int,
             max_depth: int,
             expl_pipe: str,
@@ -183,6 +187,7 @@ class TableUtils:
                         result_file_type='b',
                         pop_size=pop_size,
                         num_gen=num_gen,
+                        num_gen_post=num_gen_post,
                         max_depth=max_depth,
                         torus_dim=0,
                         dataset_name=dataset_name,
@@ -218,6 +223,7 @@ class TableUtils:
                         linear_scaling=linear_scaling,
                         pop_size=pop_size,
                         num_gen=num_gen,
+                        num_gen_post=num_gen_post,
                         max_depth=max_depth,
                         torus_dim=torus_dim,
                         dataset_name=dataset_name,
@@ -323,6 +329,7 @@ if __name__ == '__main__':
 
     linear_scaling: bool = False
     mode: str = 'gsgp'
+    num_gen_post: int = 0
     pop_size: int = 100
     num_gen: int = 1000
     competitor_rate: float = 0.6
@@ -348,6 +355,7 @@ if __name__ == '__main__':
                                               dataset_names=['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson'],
                                               pop_size=pop_size,
                                               num_gen=num_gen,
+                                              num_gen_post=num_gen_post,
                                               last_gen=num_gen,
                                               max_depth=6,
                                               expl_pipe=expl_pipe,

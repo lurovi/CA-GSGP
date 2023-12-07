@@ -33,6 +33,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
     pop_shape: tuple[int, ...],
     pop_size: int,
     num_gen: int,
+    num_gen_post: int,
     max_depth: int,
     generation_strategy: str,
     operators: list[Node],
@@ -70,6 +71,9 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
         execute_mutation: bool = True
     else:
         raise ValueError(f'{expl_pipe} is not a valid exploration pipeline.')
+
+    if mode != 'gsgpgp':
+        num_gen_post = 0
 
     # ===========================
     # LOADING DATASET
@@ -155,6 +159,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
         pop_size=pop_size,
         pop_shape=pop_shape,
         num_gen=num_gen,
+        num_gen_post=num_gen_post,
         seed=seed,
         structure=structure,
         crossover_probability=crossover_probability,
@@ -187,6 +192,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
         linear_scaling=linear_scaling,
         pop_size=pop_size,
         num_gen=num_gen,
+        num_gen_post=num_gen_post,
         num_offsprings=pop_size,
         max_depth=max_depth,
         generation_strategy=generation_strategy,
@@ -205,7 +211,7 @@ def run_symbolic_regression_with_cellular_automata_gsgp(
         duplicates_elimination=duplicates_elimination
     )
     
-    path_run_id: str = f'linearscaling{int(linear_scaling)}/cmprate{str(round(competitor_rate, 2))}/{expl_pipe}/'
+    path_run_id: str = f'linearscaling{int(linear_scaling)}/numgenpost{num_gen_post}/cmprate{str(round(competitor_rate, 2))}/{expl_pipe}/'
     run_id: str = f"c{mode}-popsize_{pop_size}-numgen_{num_gen}-maxdepth_{max_depth}-torus_dim_{torus_dim}-dataset_{dataset_name}-dupl_elim_{duplicates_elimination}-pop_shape_{'x'.join([str(n) for n in pop_shape])}-crossprob_{str(round(crossover_probability, 2))}-mutprob_{str(round(mutation_probability, 2))}-m_{str(round(m, 2))}-radius_{str(radius)}-pressure_{str(pressure)}-genstrat_{generation_strategy}-elitism_{str(int(elitism))}-SEED{seed}"
     if verbose:
         print(f"\nSYMBOLIC TREES RMSE CA-{mode.upper()} SOO: Completed with seed {seed}, PopSize {pop_size}, NumGen {num_gen}, MaxDepth {max_depth}, Torus Dim {torus_dim}, Dataset {dataset_name}, Duplicates Elimination {duplicates_elimination}, Pop Shape {str(pop_shape)}, Crossover Probability {str(round(crossover_probability, 2))}, Mutation Probability {str(round(mutation_probability, 2))}, M {str(round(m, 2))}, CompetitorRate {str(round(competitor_rate, 2))}, Radius {str(radius)}, Pressure {str(pressure)}, Generation Strategy {generation_strategy}, Elitism {str(int(elitism))}.\nExecutionTimeInMinutes: {execution_time_in_minutes}.\n")
@@ -219,6 +225,7 @@ def __ca_inspired_gsgp(
     pop_size: int,
     pop_shape: int,
     num_gen: int,
+    num_gen_post: int,
     seed: int,
     structure: TreeStructure,
     crossover_probability: float,

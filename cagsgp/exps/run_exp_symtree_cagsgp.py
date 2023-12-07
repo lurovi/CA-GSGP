@@ -31,6 +31,7 @@ def run_single_experiment(
         pop_shape: tuple[int, ...],
         pop_size: int,
         num_gen: int,
+        num_gen_post: int,
         max_depth: int,
         generation_strategy: str,
         operators: list[Node],
@@ -58,6 +59,7 @@ def run_single_experiment(
             pop_shape=pop_shape,
             pop_size=pop_size,
             num_gen=num_gen,
+            num_gen_post=num_gen_post,
             max_depth=max_depth,
             generation_strategy=generation_strategy,
             operators=operators,
@@ -81,7 +83,7 @@ def run_single_experiment(
         )
         ResultUtils.write_result_to_json(path=folder_name, path_run_id=t[1], run_id=t[2], pareto_front_dict=t[0])
     
-    verbose_output: str = f'Mode {mode} PopSize {pop_size} NumGen {num_gen} ExplPipe {expl_pipe} Dataset {dataset_name} Radius {radius} TorusDim {torus_dim} CompetitorRate {competitor_rate} COMPLETED'
+    verbose_output: str = f'Mode {mode} PopSize {pop_size} NumGen {num_gen} NumGenPost {num_gen_post} ExplPipe {expl_pipe} Dataset {dataset_name} Radius {radius} TorusDim {torus_dim} CompetitorRate {competitor_rate} COMPLETED'
     print(verbose_output)
     with open(folder_name + 'terminal_std_out.txt', 'a+') as terminal_std_out:
         terminal_std_out.write(verbose_output)
@@ -107,6 +109,7 @@ if __name__ == '__main__':
     # ===========================
 
     mode: str = 'gsgp'
+    num_gen_post: int = 0
     linear_scaling: bool = False
     m: float = 0.0
     max_depth: int = 6
@@ -200,6 +203,7 @@ if __name__ == '__main__':
                                             folder_name=folder_name,
                                             dataset_path_folder=dataset_path_folder,
                                             mode=mode,
+                                            num_gen_post=num_gen_post,
                                             linear_scaling=linear_scaling,
                                             max_depth=max_depth,
                                             generation_strategy=generation_strategy,

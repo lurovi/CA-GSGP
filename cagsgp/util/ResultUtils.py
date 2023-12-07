@@ -78,6 +78,7 @@ class ResultUtils:
         linear_scaling: bool,
         pop_size: int,
         num_gen: int,
+        num_gen_post: int,
         num_offsprings: int,
         max_depth: int,
         generation_strategy: str,
@@ -108,6 +109,7 @@ class ResultUtils:
         pareto_front_dict["parameters"]["Mode"] = mode
         pareto_front_dict["parameters"]["PopSize"] = pop_size
         pareto_front_dict["parameters"]["NumGen"] = num_gen
+        pareto_front_dict["parameters"]["NumGenPost"] = num_gen_post
         pareto_front_dict["parameters"]["NumOffsprings"] = num_offsprings
         pareto_front_dict["parameters"]["MaxDepth"] = max_depth
         pareto_front_dict["parameters"]["GenerationStrategy"] = generation_strategy
@@ -150,6 +152,7 @@ class ResultUtils:
         linear_scaling: bool,
         pop_size: int,
         num_gen: int,
+        num_gen_post: int,
         max_depth: int,
         torus_dim: int,
         dataset_name: str,
@@ -166,6 +169,9 @@ class ResultUtils:
         seed: int
     ) -> dict[str, Any]:
         
+        if mode != 'gsgpgp':
+            num_gen_post = 0
+
         pop_shape_str: str = 'x'.join([str(n) for n in pop_shape])
         crossprob: str = str(round(crossover_probability, 2))
         mutprob: str = str(round(mutation_probability, 2))
@@ -176,7 +182,7 @@ class ResultUtils:
         elitism_str: str = str(int(elitism))
         seed_str: str = str(seed)
         
-        path_run_id: str = f'linearscaling{int(linear_scaling)}/cmprate{cmprate}/{expl_pipe}/'
+        path_run_id: str = f'linearscaling{int(linear_scaling)}/numgenpost{num_gen_post}/cmprate{cmprate}/{expl_pipe}/'
         run_id: str = f"c{mode}-popsize_{str(pop_size)}-numgen_{str(num_gen)}-maxdepth_{str(max_depth)}-torus_dim_{str(torus_dim)}-dataset_{dataset_name}-dupl_elim_{duplicates_elimination}-pop_shape_{pop_shape_str}-crossprob_{crossprob}-mutprob_{mutprob}-m_{m_str}-radius_{radius_str}-pressure_{pressure_str}-genstrat_{generation_strategy}-elitism_{elitism_str}-SEED{seed_str}"
 
         with open(folder_name + path_run_id + result_file_type + run_id + '.json', 'r') as f:
