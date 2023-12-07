@@ -157,6 +157,10 @@ class TreeStructure:
             raise AttributeError("Ephemeral function has not been defined in the constructor of this instance.")
         return self.__ephemeral_func()
 
+    def set_fix_properties(self, fix_properties: bool) -> None:
+        for oper in self.__operators:
+            oper.set_fix_properties(fix_properties)
+
     def get_number_of_operators(self) -> int:
         return self.__n_operators
 
