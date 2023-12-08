@@ -297,6 +297,8 @@ def __ca_inspired_gsgp(
     # ===========================
     
     pop: list[tuple[Node, dict[str, float]]] = [(structure.generate_tree(), {}) for _ in range(pop_size)]
+    use_gsgp_semantic_vector_as_train_y: bool = False
+    perform_gp_operators: bool = False
 
     # ===========================
     # ITERATIONS
@@ -308,7 +310,7 @@ def __ca_inspired_gsgp(
         # FITNESS EVALUATION AND UPDATE
         # ===========================
         
-        tt: tuple[dict[str, list[float]], int] = __fitness_evaluation_and_update_statistics_and_result(
+        tt: tuple[dict[str, list[float]], int, np.ndarray] = __fitness_evaluation_and_update_statistics_and_result(
             mode=mode,
             linear_scaling=linear_scaling,
             pop=pop,
@@ -321,7 +323,9 @@ def __ca_inspired_gsgp(
             train_set=train_set,
             test_set=test_set,
             weights_matrix_moran=weights_matrix_moran,
-            moran_formula_coef=moran_formula_coef
+            moran_formula_coef=moran_formula_coef,
+            use_gsgp_semantic_vector_as_train_y=use_gsgp_semantic_vector_as_train_y,
+            best_tree_semantic_vector=None
         )
         fit_values_train: list[float] = tt[0]['train']
         fit_values_test: list[float] = tt[0]['test']
@@ -337,33 +341,18 @@ def __ca_inspired_gsgp(
 
         for coordinate in all_possible_coordinates:
 
-            if not is_tournament_selection:
-                competitors: list[tuple[int, Node, float, float]] = [neighbors_topology.get(idx_tuple, clone=False) for idx_tuple in all_neighborhoods_indices[coordinate]]
-                competitors.sort(key=lambda x: x[0], reverse=False)
-                
-                if competitor_rate == 1.0:
-                    sampled_competitors: list[tuple[int, Node, float, float]] = competitors
-                else:
-                    sampled_competitors: list[tuple[int, Node, float, float]] = [competitor for competitor in competitors if random.random() < competitor_rate]
-                while len(sampled_competitors) < 2:
-                    sampled_competitors.append(competitors[int(random.random()*len(competitors))])
-                sampled_competitors.sort(key=lambda x: x[2], reverse=False)
-                first: tuple[int, Node, float, float] = sampled_competitors[0]
-                second: tuple[int, Node, float, float] = sampled_competitors[1]
-
-            else:
-                first_tournament: list[tuple[int, Node, float, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
-                first_tournament.sort(key=lambda x: x[2], reverse=False)
-                first: tuple[int, Node, float, float] = first_tournament[0]
-                second_tournament: list[tuple[int, Node, float, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
-                second_tournament.sort(key=lambda x: x[2], reverse=False)
-                second: tuple[int, Node, float, float] = second_tournament[0]
+            first, second = __simple_selection_process(
+                is_tournament_selection=is_tournament_selection,
+                competitor_rate=competitor_rate,
+                neighbors_topology=neighbors_topology,
+                coordinate=coordinate,
+                all_neighborhoods_indices=all_neighborhoods_indices
+            )
             
             parents.append(((first[1], first[2], first[3]), (second[1], second[2], second[3])))
 
         evaluated_individuals = None
         neighbors_topology = None
-        competitors = None
         first = None
         second = None
 
@@ -376,34 +365,24 @@ def __ca_inspired_gsgp(
             first_parent: tuple[Node, float, float] = both_trees[0]
             second_parent: tuple[Node, float, float] = both_trees[1]
             
-            if elitism and i == index_of_min_value:
-                # If elitism, preserve the best individual to the next generation
-                offsprings.append(pop[i])
-            else:
-                # == CROSSOVER ==
-                if execute_crossover and random.random() < crossover_probability:
-                    if mode == 'gsgp' or mode == 'gsgpgp':
-                        cx_tree: Node = structure.geometric_semantic_single_tree_crossover(first_parent[0], second_parent[0], enable_caching=True, fix_properties=True)
-                    elif mode == 'gp':
-                        cx_tree: Node = structure.safe_subtree_crossover_two_children(first_parent[0], second_parent[0])[0]
-                    else:
-                        raise AttributeError(f'Invalid mode ({mode}).')
-                    new_tree: tuple[Node, dict[str, float]] = (cx_tree, {})
-                else:
-                    new_tree: tuple[Node, dict[str, float]] = (first_parent[0], {'train': first_parent[1], 'test': first_parent[2]})
-
-                # == MUTATION ==
-                if execute_mutation and random.random() < mutation_probability:
-                    mutation_step: float = m if m != 0.0 else random.uniform(0.0, 1.0 + 1e-8)
-                    if mode == 'gsgp' or mode == 'gsgpgp':
-                        mut_tree: Node = structure.geometric_semantic_tree_mutation(new_tree[0], m=mutation_step, enable_caching=True, fix_properties=True)
-                    elif mode == 'gp':
-                        mut_tree: Node = structure.safe_subtree_mutation(new_tree[0])
-                    else:
-                        raise AttributeError(f'Invalid mode ({mode}).')
-                    new_tree = (mut_tree, {})
-                
-                offsprings.append(new_tree)
+            new_tree: tuple[Node, dict[str, float]] = __simple_crossmut_process(
+                elitism=elitism,
+                i=i,
+                index_of_min_value=index_of_min_value,
+                pop=pop,
+                execute_crossover=execute_crossover,
+                execute_mutation=execute_mutation,
+                crossover_probability=crossover_probability,
+                mutation_probability=mutation_probability,
+                mode=mode,
+                structure=structure,
+                m=m,
+                first_parent=first_parent,
+                second_parent=second_parent,
+                perform_gp_operators=perform_gp_operators
+            )
+                        
+            offsprings.append(new_tree)
 
         # ===========================
         # CHANGE POPULATION
@@ -423,7 +402,7 @@ def __ca_inspired_gsgp(
     # LAST FITNESS EVALUATION AND UPDATE
     # ===========================
 
-    _ = __fitness_evaluation_and_update_statistics_and_result(
+    _, _, best_tree_semantic_vector = __fitness_evaluation_and_update_statistics_and_result(
             mode=mode,
             linear_scaling=linear_scaling,
             pop=pop,
@@ -436,9 +415,150 @@ def __ca_inspired_gsgp(
             train_set=train_set,
             test_set=test_set,
             weights_matrix_moran=weights_matrix_moran,
-            moran_formula_coef=moran_formula_coef
+            moran_formula_coef=moran_formula_coef,
+            use_gsgp_semantic_vector_as_train_y=use_gsgp_semantic_vector_as_train_y,
+            best_tree_semantic_vector=None
         )
+
+    # ===========================
+    # POST EVOLUTION WITH GP FOR GSGPGP
+    # ===========================
     
+    if mode == 'gsgpgp':
+
+        structure.set_fix_properties(False)
+
+        # ====
+        # INITIALIZATION
+        # ====
+        
+        pop = [(structure.generate_tree(), {}) for _ in range(pop_size)]
+        use_gsgp_semantic_vector_as_train_y = True
+        perform_gp_operators = True
+
+        # ====
+        # ITERATIONS
+        # ====
+        
+        for current_gen in range(num_gen_post):
+
+            # ====
+            # FITNESS EVALUATION AND UPDATE
+            # ====
+            
+            tt: tuple[dict[str, list[float]], int, np.ndarray] = __fitness_evaluation_and_update_statistics_and_result(
+                mode=mode,
+                linear_scaling=linear_scaling,
+                pop=pop,
+                pop_size=pop_size,
+                stats_collector=stats_collector,
+                current_gen=current_gen,
+                verbose=verbose,
+                gen_verbosity_level=gen_verbosity_level,
+                result=result,
+                train_set=train_set,
+                test_set=test_set,
+                weights_matrix_moran=weights_matrix_moran,
+                moran_formula_coef=moran_formula_coef,
+                use_gsgp_semantic_vector_as_train_y=use_gsgp_semantic_vector_as_train_y,
+                best_tree_semantic_vector=best_tree_semantic_vector
+            )
+            fit_values_train: list[float] = tt[0]['train']
+            fit_values_test: list[float] = tt[0]['test']
+            index_of_min_value: int = tt[1]
+
+            # ====
+            # SELECTION
+            # ====
+
+            evaluated_individuals: list[tuple[int, Node, float, float]] = [(i, pop[i][0], fit_values_train[i], fit_values_test[i]) for i in range(pop_size)]
+            parents: list[tuple[tuple[Node, float, float], tuple[Node, float, float]]] = []
+            neighbors_topology: NeighborsTopology = neighbors_topology_factory.create(evaluated_individuals, clone=False)
+
+            for coordinate in all_possible_coordinates:
+
+                first, second = __simple_selection_process(
+                    is_tournament_selection=is_tournament_selection,
+                    competitor_rate=competitor_rate,
+                    neighbors_topology=neighbors_topology,
+                    coordinate=coordinate,
+                    all_neighborhoods_indices=all_neighborhoods_indices
+                )
+                
+                parents.append(((first[1], first[2], first[3]), (second[1], second[2], second[3])))
+
+            evaluated_individuals = None
+            neighbors_topology = None
+            first = None
+            second = None
+
+            # ====
+            # CROSSOVER AND MUTATION
+            # ====
+
+            offsprings: list[tuple[Node, dict[str, float]]] = []
+            for i, both_trees in enumerate(parents, 0):
+                first_parent: tuple[Node, float, float] = both_trees[0]
+                second_parent: tuple[Node, float, float] = both_trees[1]
+                
+                new_tree: tuple[Node, dict[str, float]] = __simple_crossmut_process(
+                    elitism=elitism,
+                    i=i,
+                    index_of_min_value=index_of_min_value,
+                    pop=pop,
+                    execute_crossover=execute_crossover,
+                    execute_mutation=execute_mutation,
+                    crossover_probability=crossover_probability,
+                    mutation_probability=mutation_probability,
+                    mode=mode,
+                    structure=structure,
+                    m=m,
+                    first_parent=first_parent,
+                    second_parent=second_parent,
+                    perform_gp_operators=perform_gp_operators
+                )
+                            
+                offsprings.append(new_tree)
+
+            # ====
+            # CHANGE POPULATION
+            # ====
+
+            pop = offsprings
+            parents = None
+            offsprings = None
+            new_tree = None
+            
+
+            # == NEXT GENERATION ==
+
+        # == END OF EVOLUTION ==
+
+        # ====
+        # LAST FITNESS EVALUATION AND UPDATE
+        # ====
+
+        _ = __fitness_evaluation_and_update_statistics_and_result(
+                mode=mode,
+                linear_scaling=linear_scaling,
+                pop=pop,
+                pop_size=pop_size,
+                stats_collector=stats_collector,
+                current_gen=num_gen_post,
+                verbose=verbose,
+                gen_verbosity_level=gen_verbosity_level,
+                result=result,
+                train_set=train_set,
+                test_set=test_set,
+                weights_matrix_moran=weights_matrix_moran,
+                moran_formula_coef=moran_formula_coef,
+                use_gsgp_semantic_vector_as_train_y=use_gsgp_semantic_vector_as_train_y,
+                best_tree_semantic_vector=best_tree_semantic_vector
+            )
+
+    # ===========================
+    # RETURNING RESULTS
+    # ===========================
 
     result['train_statistics'] = stats_collector['train'].build_list()
     result['test_statistics'] = stats_collector['test'].build_list()
@@ -459,8 +579,10 @@ def __fitness_evaluation_and_update_statistics_and_result(
     train_set: tuple[np.ndarray, np.ndarray],
     test_set: tuple[np.ndarray, np.ndarray],
     weights_matrix_moran: list[list[float]],
-    moran_formula_coef: float
-) -> tuple[dict[str, list[float]], int]:
+    moran_formula_coef: float,
+    use_gsgp_semantic_vector_as_train_y: bool,
+    best_tree_semantic_vector: np.ndarray
+) -> tuple[dict[str, list[float]], int, np.ndarray]:
     
     # ===========================
     # FITNESS EVALUATION
@@ -473,11 +595,18 @@ def __fitness_evaluation_and_update_statistics_and_result(
             X_train=train_set[0],
             y_train=train_set[1],
             X_test=test_set[0],
-            y_test=test_set[1]
+            y_test=test_set[1],
+            use_gsgp_semantic_vector_as_train_y=use_gsgp_semantic_vector_as_train_y,
+            best_tree_semantic_vector=best_tree_semantic_vector
     )
 
     fit_values_dict: dict[str, list[float]] = tt[0]
     semantic_vectors: list[np.ndarray] = tt[1]
+
+    min_value: float = min(fit_values_dict['train'])
+    index_of_min_value: int = fit_values_dict['train'].index(min_value)
+    best_tree_in_this_gen: Node = pop[index_of_min_value][0]
+    best_tree_semantic_vector_C: np.ndarray = semantic_vectors[index_of_min_value]
 
     # ===========================
     # UPDATE STATISTICS
@@ -486,10 +615,10 @@ def __fitness_evaluation_and_update_statistics_and_result(
     for dataset_type in ['train', 'test']:
         stats_collector[dataset_type].update_fitness_stat_dict(n_gen=current_gen, data=fit_values_dict[dataset_type])
     
-    table: PrettyTable = PrettyTable(["Generation", "Min", "Mean", "Median", "Var"])
+    table: PrettyTable = PrettyTable(["Generation", "TrMin", "TeMin", "Median", "Var"])
     table.add_row([str(current_gen),
                    stats_collector['train'].get_fitness_stat(current_gen, 'min'),
-                   stats_collector['train'].get_fitness_stat(current_gen, 'mean'),
+                   fit_values_dict['test'][index_of_min_value],
                    stats_collector['train'].get_fitness_stat(current_gen, 'median'),
                    stats_collector['train'].get_fitness_stat(current_gen, 'var')])
     
@@ -499,10 +628,7 @@ def __fitness_evaluation_and_update_statistics_and_result(
     # ===========================
     # UPDATE BEST AND HISTORY
     # ===========================
-
-    min_value: float = min(fit_values_dict['train'])
-    index_of_min_value: int = fit_values_dict['train'].index(min_value)
-    best_tree_in_this_gen: Node = pop[index_of_min_value][0]
+    
     best_ind_here_totally: dict[str, Any] = {
         'Fitness': {'Train RMSE': min_value, 'Test RMSE': fit_values_dict['test'][index_of_min_value]},
         'PopIndex': index_of_min_value,
@@ -513,7 +639,7 @@ def __fitness_evaluation_and_update_statistics_and_result(
         #'HeightNNodes': float(best_tree_in_this_gen.get_height() + 1) / float(best_tree_in_this_gen.get_n_nodes())
     }
 
-    if mode == 'gp':
+    if mode == 'gp' or use_gsgp_semantic_vector_as_train_y:
         best_ind_here_totally['Tree'] = TreeStructure.get_subtree_as_full_string(best_tree_in_this_gen)
     else:
         best_ind_here_totally['Tree'] = ''
@@ -542,10 +668,20 @@ def __fitness_evaluation_and_update_statistics_and_result(
         }
     )
 
-    return (fit_values_dict, index_of_min_value)
+    return fit_values_dict, index_of_min_value, best_tree_semantic_vector_C
 
 
-def __compute_single_RMSE_value_and_replace(linear_scaling: bool, pop: list[tuple[Node, dict[str, float]]], pop_size: int, X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray, y_test: np.ndarray) -> tuple[dict[str, list[float]], list[np.ndarray]]:
+def __compute_single_RMSE_value_and_replace(
+        linear_scaling: bool,
+        pop: list[tuple[Node, dict[str, float]]],
+        pop_size: int,
+        X_train: np.ndarray,
+        y_train: np.ndarray,
+        X_test: np.ndarray,
+        y_test: np.ndarray,
+        use_gsgp_semantic_vector_as_train_y: bool,
+        best_tree_semantic_vector: np.ndarray
+) -> tuple[dict[str, list[float]], list[np.ndarray]]:
     fit_values_dict: dict[str, list[float]] = {'train': [], 'test': []}
     semantic_vectors: list[np.ndarray] = []
 
@@ -563,11 +699,11 @@ def __compute_single_RMSE_value_and_replace(linear_scaling: bool, pop: list[tupl
             p_test: np.ndarray = np.core.umath.clip(current_tree(X_test, dataset_type='test'), -1e+10, 1e+10)
 
             if linear_scaling:
-                slope, intercept = EvaluationMetrics.compute_linear_scaling(y=y_train, p=p_train)
-                train_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y_train, p=p_train, linear_scaling=False, slope=slope, intercept=intercept)
+                slope, intercept = EvaluationMetrics.compute_linear_scaling(y=best_tree_semantic_vector if use_gsgp_semantic_vector_as_train_y else y_train, p=p_train)
+                train_fitness: float = EvaluationMetrics.root_mean_squared_error(y=best_tree_semantic_vector if use_gsgp_semantic_vector_as_train_y else y_train, p=p_train, linear_scaling=False, slope=slope, intercept=intercept)
                 test_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y_test, p=p_test, linear_scaling=False, slope=slope, intercept=intercept)
             else:
-                train_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y_train, p=p_train, linear_scaling=False, slope=None, intercept=None)
+                train_fitness: float = EvaluationMetrics.root_mean_squared_error(y=best_tree_semantic_vector if use_gsgp_semantic_vector_as_train_y else y_train, p=p_train, linear_scaling=False, slope=None, intercept=None)
                 test_fitness: float = EvaluationMetrics.root_mean_squared_error(y=y_test, p=p_test, linear_scaling=False, slope=None, intercept=None)
             
             new_fitness: dict[str, float] = {'train': train_fitness, 'test': test_fitness}
@@ -576,3 +712,78 @@ def __compute_single_RMSE_value_and_replace(linear_scaling: bool, pop: list[tupl
         fit_values_dict['test'].append(new_fitness['test'])
 
     return fit_values_dict, semantic_vectors
+
+def __simple_selection_process(
+        is_tournament_selection: bool,
+        competitor_rate: float,
+        neighbors_topology: NeighborsTopology,
+        coordinate: tuple[int, ...],
+        all_neighborhoods_indices: dict[tuple[int, ...], list[tuple[int, ...]]]
+) -> tuple[tuple[int, Node, float, float], tuple[int, Node, float, float]]:
+    if not is_tournament_selection:
+        competitors: list[tuple[int, Node, float, float]] = [neighbors_topology.get(idx_tuple, clone=False) for idx_tuple in all_neighborhoods_indices[coordinate]]
+        competitors.sort(key=lambda x: x[0], reverse=False)
+        
+        if competitor_rate == 1.0:
+            sampled_competitors: list[tuple[int, Node, float, float]] = competitors
+        else:
+            sampled_competitors: list[tuple[int, Node, float, float]] = [competitor for competitor in competitors if random.random() < competitor_rate]
+        while len(sampled_competitors) < 2:
+            sampled_competitors.append(competitors[int(random.random()*len(competitors))])
+        sampled_competitors.sort(key=lambda x: x[2], reverse=False)
+        first: tuple[int, Node, float, float] = sampled_competitors[0]
+        second: tuple[int, Node, float, float] = sampled_competitors[1]
+    else:
+        first_tournament: list[tuple[int, Node, float, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
+        first_tournament.sort(key=lambda x: x[2], reverse=False)
+        first: tuple[int, Node, float, float] = first_tournament[0]
+        second_tournament: list[tuple[int, Node, float, float]] = neighbors_topology.neighborhood(coordinate, include_current_point=True, clone=False, distinct_coordinates=False)
+        second_tournament.sort(key=lambda x: x[2], reverse=False)
+        second: tuple[int, Node, float, float] = second_tournament[0]
+    
+    return first, second
+
+def __simple_crossmut_process(
+        elitism: bool,
+        i: int,
+        index_of_min_value: int,
+        pop: list[tuple[Node, dict[str, float]]],
+        execute_crossover: bool,
+        execute_mutation: bool,
+        crossover_probability: float,
+        mutation_probability: float,
+        mode: str,
+        structure: TreeStructure,
+        m: float,
+        first_parent: tuple[Node, float, float],
+        second_parent: tuple[Node, float, float],
+        perform_gp_operators: bool
+) -> tuple[Node, dict[str, float]]:
+    if elitism and i == index_of_min_value:
+        # If elitism, preserve the best individual to the next generation
+        new_tree: tuple[Node, dict[str, float]] = pop[i]
+    else:
+        # == CROSSOVER ==
+        if execute_crossover and random.random() < crossover_probability:
+            if not perform_gp_operators and (mode == 'gsgp' or mode == 'gsgpgp'):
+                cx_tree: Node = structure.geometric_semantic_single_tree_crossover(first_parent[0], second_parent[0], enable_caching=True, fix_properties=True)
+            elif mode == 'gp' or perform_gp_operators:
+                cx_tree: Node = structure.safe_subtree_crossover_two_children(first_parent[0], second_parent[0])[0]
+            else:
+                raise AttributeError(f'Invalid mode ({mode}).')
+            new_tree: tuple[Node, dict[str, float]] = (cx_tree, {})
+        else:
+            new_tree: tuple[Node, dict[str, float]] = (first_parent[0], {'train': first_parent[1], 'test': first_parent[2]})
+
+        # == MUTATION ==
+        if execute_mutation and random.random() < mutation_probability:
+            mutation_step: float = m if m != 0.0 else random.uniform(0.0, 1.0 + 1e-8)
+            if not perform_gp_operators and (mode == 'gsgp' or mode == 'gsgpgp'):
+                mut_tree: Node = structure.geometric_semantic_tree_mutation(new_tree[0], m=mutation_step, enable_caching=True, fix_properties=True)
+            elif mode == 'gp' or perform_gp_operators:
+                mut_tree: Node = structure.safe_subtree_mutation(new_tree[0])
+            else:
+                raise AttributeError(f'Invalid mode ({mode}).')
+            new_tree = (mut_tree, {})
+    
+    return new_tree
