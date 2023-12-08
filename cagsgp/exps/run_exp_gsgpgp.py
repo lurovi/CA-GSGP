@@ -137,20 +137,26 @@ if __name__ == '__main__':
         for linear_scaling in [True, False]:
             parameters.append({'dataset_name': dataset_name,
                                 'mode': 'gp',
-                                'num_gen': 50,
+                                'num_gen': 1000,
                                 'num_gen_post': 0,
                                 'linear_scaling': linear_scaling
                                 })
             parameters.append({'dataset_name': dataset_name,
                                 'mode': 'gsgp',
-                                'num_gen': 50,
+                                'num_gen': 1000,
                                 'num_gen_post': 0,
                                 'linear_scaling': linear_scaling
                                 })
             parameters.append({'dataset_name': dataset_name,
                                 'mode': 'gsgpgp',
-                                'num_gen': 30,
-                                'num_gen_post': 50,
+                                'num_gen': 800,
+                                'num_gen_post': 200,
+                                'linear_scaling': linear_scaling
+                                })
+            parameters.append({'dataset_name': dataset_name,
+                                'mode': 'gsgpgp',
+                                'num_gen': 700,
+                                'num_gen_post': 300,
                                 'linear_scaling': linear_scaling
                                 })
     
@@ -164,10 +170,10 @@ if __name__ == '__main__':
     # = EXPERIMENT MULTIPROCESSING AND VERBOSE PARAMETERS =
 
     start_seed: int = 1
-    end_seed: int = 2
+    end_seed: int = 30
     gen_verbosity_level: int = 1
-    verbose: bool = True
-    multiprocess: bool = False
+    verbose: bool = False
+    multiprocess: bool = True
     num_cores: int = os.cpu_count() - 4
     if len(parameters) <= num_cores:
         total_num_of_param_blocks: int = 1
@@ -225,7 +231,7 @@ if __name__ == '__main__':
                                             verbose=verbose
                                         )
         
-        task_index = '2'
+        #task_index = '0'
 
         if task_index is None:
             _ = parallelizer.parallelize(parallel_func, parameters=parameters_temp)
