@@ -472,21 +472,198 @@ class SnsPlotUtils:
             # plt.show()
             plt.clf()
             plt.cla()
-            plt.close()   
+            plt.close()
+
+
+    @staticmethod
+    def simple_line_plot_mode_numgenpost_single_split_type(
+            folder_name: str,
+            output_path: str,
+            linear_scaling: bool,
+            split_type: str,
+            seed_list: list[int],
+            radius: int,
+            main_topology_name: str,
+            dataset_names: list[str],
+            log_scaled_datasets: list[str],
+            pop_size: int,
+            num_gen: int,
+            num_gen_posts: list[int],
+            last_gen: int,
+            max_depth: int,
+            expl_pipe: str,
+            duplicates_elimination: str,
+            crossover_probability: float,
+            mutation_probability: float,
+            m: float,
+            generation_strategy: str,
+            elitism: bool
+    ) -> None:
+        
+        split_type: str = StringUtils.only_first_char_upper(split_type)
+        for dataset_name in dataset_names:
+            log_scale_y: bool = True if dataset_name in log_scaled_datasets else False
+            data: dict[str, list[Any]] = {'Generation': [],
+                                          'Mode': [],
+                                          'Best RMSE': []}
+            
+            title: str = StringUtils.only_first_char_upper(dataset_name) + ' ' + split_type + ' Median Best RMSE'
+            file_name: str = 'lineplot'+'-'+split_type+'-'+dataset_name+'-'+main_topology_name+'.svg'
+            #file_name: str = 'lineplot'+'-'+split_type+'-'+dataset_name+'-'+main_topology_name+'.png'
+            
+            result_file_type: str = 'b'
+            if result_file_type == 'b':
+                name_of_the_first_key: str = 'history'
+            elif result_file_type == 'tr':
+                name_of_the_first_key: str = 'train_statistics'
+            elif result_file_type == 'te':
+                name_of_the_first_key: str = 'test_statistics'
+            else:
+                raise ValueError(f'{result_file_type} is not a valid result file type')
+
+            for mode in ['gp', 'gsgp']:
+                for seed in seed_list:
+                    d: dict[str, Any] = ResultUtils.read_single_json_file(
+                        folder_name=folder_name,
+                        result_file_type=result_file_type,
+                        mode=mode,
+                        linear_scaling=linear_scaling,
+                        pop_size=pop_size,
+                        num_gen=num_gen,
+                        num_gen_post=0,
+                        max_depth=max_depth,
+                        torus_dim=0,
+                        dataset_name=dataset_name,
+                        expl_pipe=expl_pipe,
+                        competitor_rate=0.0,
+                        duplicates_elimination=duplicates_elimination,
+                        pop_shape=(pop_size,),
+                        crossover_probability=crossover_probability,
+                        mutation_probability=mutation_probability,
+                        m=m,
+                        radius=radius,
+                        generation_strategy=generation_strategy,
+                        elitism=elitism,
+                        seed=seed
+                    )
+                    
+                    history: list[dict[str, Any]] = d[name_of_the_first_key][:(last_gen + 1)]
+                    d = None
+                    for i, d in enumerate(history, 0):
+                        data['Generation'].append(i)
+                        data['Mode'].append(StringUtils.concat(mode.upper(), str(num_gen)))
+                        data['Best RMSE'].append(d['Fitness'][split_type+' RMSE']) # Test RMSE preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['EuclideanDistanceStats']['median']) # distance euclidea mediana presa dal file che inizia con b
+                        #data['Best RMSE'].append(d['Height']) # height preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['LogNNodes']) # log nnodes preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['HeightStats']['median']) # height pop stats median preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['LogNNodesStats']['median']) # log nnodes pop stats median preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['GlobalMoranI']) # global moran I preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['RMSE']['median']) # la fitness mediana sul train di tutti gli individui nella popolazione presa dal file che inizia con tr 
+                    history = None
+
+            for num_gen_post in num_gen_posts:
+                for seed in seed_list:
+                    d: dict[str, Any] = ResultUtils.read_single_json_file(
+                        folder_name=folder_name,
+                        result_file_type=result_file_type,
+                        mode='gsgpgp',
+                        linear_scaling=linear_scaling,
+                        pop_size=pop_size,
+                        num_gen=num_gen - num_gen_post,
+                        num_gen_post=num_gen_post,
+                        max_depth=max_depth,
+                        torus_dim=0,
+                        dataset_name=dataset_name,
+                        expl_pipe=expl_pipe,
+                        competitor_rate=0.0,
+                        duplicates_elimination=duplicates_elimination,
+                        pop_shape=(pop_size,),
+                        crossover_probability=crossover_probability,
+                        mutation_probability=mutation_probability,
+                        m=m,
+                        radius=radius,
+                        generation_strategy=generation_strategy,
+                        elitism=elitism,
+                        seed=seed
+                    )
+                    
+                    history: list[dict[str, Any]] = d[name_of_the_first_key][:(last_gen + 1)]
+                    d = None
+                    for i, d in enumerate(history, 0):
+                        data['Generation'].append(i)
+                        data['Mode'].append(StringUtils.concat('GG', str(num_gen_post)))
+                        data['Best RMSE'].append(d['Fitness'][split_type+' RMSE']) # Test RMSE preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['EuclideanDistanceStats']['median']) # distance euclidea mediana presa dal file che inizia con b
+                        #data['Best RMSE'].append(d['Height']) # height preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['LogNNodes']) # log nnodes preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['HeightStats']['median']) # height pop stats median preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['LogNNodesStats']['median']) # log nnodes pop stats median preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['GlobalMoranI']) # global moran I preso dal file che inizia con b
+                        #data['Best RMSE'].append(d['RMSE']['median']) # la fitness mediana sul train di tutti gli individui nella popolazione presa dal file che inizia con tr 
+                    history = None
+
+            data: pd.DataFrame = pd.DataFrame(data)
+            sns.set_theme(font="STIXGeneral", palette="colorblind", style="white", font_scale=1.6,
+                      rc={'figure.figsize': (13, 10), 'pdf.fonttype': 42, 'ps.fonttype': 42,
+                          'axes.formatter.use_mathtext': True, 'axes.unicode_minus': False})
+            g = sns.lineplot(data=data, x="Generation", y="Best RMSE", hue="Mode", estimator=np.median, errorbar=None, palette="colorblind")
+            plt.title(title)
+            plt.legend(fontsize='small', title_fontsize='small')
+            if log_scale_y:
+                plt.yscale('log')
+            plt.savefig(output_path+file_name, format='svg')
+            #plt.savefig(output_path+file_name, format='png')
+            # plt.show()
+            plt.clf()
+            plt.cla()
+            plt.close()
 
 
 if __name__ == '__main__':
     # Datasets: ['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
-    folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
-    output_path: str = codebase_folder + 'python_data/CA-GSGP/' + 'images_1' + '/'
+    folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_a_1' + '/'
+    output_path: str = codebase_folder + 'python_data/CA-GSGP/' + 'images_a_1' + '/'
+
+    linear_scaling: bool = False
+    pop_size: int = 500
+    num_gen: int = 400
+    expl_pipe: str = 'crossmut'
+    radius: int = 4
+
+    SnsPlotUtils.simple_line_plot_mode_numgenpost_single_split_type(
+        folder_name=folder_name,
+        output_path=output_path,
+        linear_scaling=linear_scaling,
+        split_type='Test',
+        seed_list=list(range(1, 30 + 1)),
+        radius=radius,
+        main_topology_name='gg',
+        dataset_names=['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson', 'korns12'],
+        log_scaled_datasets=['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson', 'korns12'],
+        pop_size=pop_size,
+        num_gen=num_gen,
+        num_gen_posts=[100, 200],
+        last_gen=num_gen,
+        max_depth=4,
+        expl_pipe=expl_pipe,
+        duplicates_elimination='nothing',
+        crossover_probability=0.9,
+        mutation_probability=0.5,
+        m=0.0,
+        generation_strategy='half',
+        elitism=True
+    )
+
+    exit(1)
 
     mode: str = 'gsgp'
     num_gen_post: int = 0
     linear_scaling: bool = False
-    pop_size: int = 900
-    num_gen: int = 111
-    competitor_rate: float = 0.6
+    pop_size: int = 100
+    num_gen: int = 1000
+    competitor_rate: float = 1.0
     expl_pipe: str = 'crossmut'
     torus_dim: int = 2
     pop_shape: tuple[int, ...] = (int(pop_size ** (1/torus_dim)), int(pop_size ** (1/torus_dim)))
@@ -635,14 +812,5 @@ if __name__ == '__main__':
                                               generation_strategy='half',
                                               elitism=True
                                               )
-    '''
+    '''        
 
-
-    
-
-
-
-
-
-
-        

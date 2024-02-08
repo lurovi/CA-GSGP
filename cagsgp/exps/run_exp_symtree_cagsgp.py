@@ -94,9 +94,7 @@ if __name__ == '__main__':
     # Datasets: ['vladislavleva14', 'keijzer6', 'airfoil', 'concrete', 'slump', 'toxicity', 'yacht', 'parkinson']
     codebase_folder: str = os.environ['CURRENT_CODEBASE_FOLDER']
     folder_name: str = codebase_folder + 'python_data/CA-GSGP/' + 'results_1' + '/'
-    #folder_name: str = '/home/luigirovito/python_data/' + 'CA-GSGP/' + 'results_1' + '/'
     dataset_path_folder: str = codebase_folder + 'python_data/CA-GSGP/datasets_csv/'
-    #dataset_path_folder: str = '/home/luigirovito/python_data/' + 'CA-GSGP/datasets_csv/'
 
     parser: argparse.ArgumentParser = argparse.ArgumentParser()
     parser.add_argument('-i', '--ind', type=str, help='Index of the parameters set to be used for the task to run.', required=False)
