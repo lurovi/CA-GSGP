@@ -4,7 +4,7 @@ Environment with Python 3.10.
 
 Main libraries:
 
-genepro (version 1.3.0) -> https://github.com/giorgia-nadizar/genepro/
+genepro (version 1.3.1) -> https://github.com/giorgia-nadizar/genepro/
 
 You can find the environment.yml in the project folder for conda environment.
 
