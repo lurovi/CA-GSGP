@@ -1,12 +1,22 @@
 # CA-GSGP 
 
-Environment with Python 3.10.
+Environment with Python 3.10 and genepro (version 1.3.1, https://github.com/giorgia-nadizar/genepro/).
 
-Main libraries:
+Open the terminal and type the following commands:
 
-genepro (version 1.3.0) -> https://github.com/giorgia-nadizar/genepro/
-
-You can find the environment.yml in the project folder for conda environment.
+```bash
+git clone https://github.com/lurovi/CA-GSGP.git
+cd CA-GSGP
+conda env create -f environment.yml
+conda activate ca_gsgp_env
+cd ..
+git clone -b v1.3.1 https://github.com/giorgia-nadizar/genepro.git
+cd genepro
+pip3 install -U .
+cd ..
+cd CA-GSGP
+pip3 install -U .
+```
 
 Be careful to properly set PYTHONPATH environment variable. Plus, mind that code leverages a custom environment variable called CURRENT\_CODEBASE\_FOLDER that contains the absolute path of the folder (the path ends with '/') that contains all code and data relevant for the project. You just have to set this variable properly to make it easier to access locations for code and data. Change the paths in the experiment scripts accordingly, always be careful that for paths pointing to a folder you must always put a '/' at the end.
 
